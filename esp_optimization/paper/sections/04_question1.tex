@@ -14,12 +14,12 @@
 从式\eqref{eq:fulltwin} 可得以下关系。
 
 \begin{enumerate}
-  \item \textbf{入口浓度。} 在去除指数不变时，$C_{\mathrm{out}}$ 与 $C_{\mathrm{in}}$ 近似成正比；同时更高的 $C_{\mathrm{in}}Q$ 增大极板负荷和振打再飞扬，因此实际响应略高于线性。
+  \item \textbf{入口浓度。} 在去除指数不变时，$C_{\mathrm{out}}$ 与 $C_{\mathrm{in}}$ 近似成正比；同时更高的 $C_{\mathrm{in}}Q$ 增大极板负荷和振打再飞扬，因此实际响应略高于线性。这意味着：高浓度工况下，振打周期的配合比低浓度时更为关键
   \item \textbf{烟气流量。} $Q$ 增大缩短有效停留时间，使 $D\propto Q^{-1}$ 减小，穿透率指数上升。高流量与高入口浓度叠加时风险最强，故采用质量负荷 $C_{\mathrm{in}}Q$ 选择高、低代表工况。
   \item \textbf{电场电压。} $\partial C_{\mathrm{out}}/\partial U_i<0$，且指数模型使边际绝对减排量逐渐递减。按附件中位电压平方归一化后，前两场的基准代理贡献约各占 30\%，后两场约各占 20\%；具体调节顺序由运行电压、功率边际和活跃约束共同决定。
   \item \textbf{温度。} $126.008^\circ\mathrm C$ 是附件均值确定的归一化参考中心，而非由出口数据识别的真实最优温度。钟形先验描述偏离参考温区后的有效迁移能力折减；图\ref{fig:tempsurface} 显示高温与低电压叠加时风险迅速增大，说明高温工况不宜依赖单一末级补偿。
 \end{enumerate}
-
+出口粉尘浓度由入口浓度与流量的乘积（质量负荷）提供线性基底，由电场电压通过指数规律起主导削减作用，由温度通过偏离最优窗口起折减或放大效应，并由振打周期通过幅度与频率的双向权衡引入动态波动——四类因素以乘积而非叠加方式耦合，共同决定最终的排放水平。
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.88\textwidth]{fig07_temperature_voltage_surface.png}
