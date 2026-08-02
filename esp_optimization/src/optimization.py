@@ -94,6 +94,87 @@ def _policy_summary(
     }
 
 
+def _repair_on_independent_scenarios(
+    policy: np.ndarray,
+    bounds: list[tuple[float, float]],
+    regime_frame: pd.DataFrame,
+    twin: EmissionTwin,
+    power: PowerSurrogate,
+    scenarios: EmissionScenarios,
+    limit: float,
+    design_confidence: float,
+    dust_limit: float,
+) -> tuple[np.ndarray, bool]:
+    """Apply a small monotone safety repair when an independent check fails.
+
+    The main optimizer still determines the field allocation.  This fallback
+    only moves that policy toward the observed voltage ceilings until the
+    buffered quantile is feasible, then lets SLSQP remove unnecessary power.
+    It avoids hand-tuning a particular regime while keeping the repair cheap.
+    """
+
+    def metrics(candidate: np.ndarray) -> tuple[float, float]:
+        concentration = twin.predict_scenarios(candidate, scenarios)
+        return (
+            float(np.quantile(concentration, design_confidence)),
+            twin.dust_load_index(candidate, regime_frame),
+        )
+
+    upper_candidate = np.asarray(policy, dtype=float).copy()
+    upper_candidate[:4] = np.asarray([bound[1] for bound in bounds[:4]])
+    upper_q, upper_dust = metrics(upper_candidate)
+    if upper_q > limit + 1e-6 or upper_dust > dust_limit + 1e-6:
+        return np.asarray(policy, dtype=float), False
+
+    # Find the smallest common move toward the voltage ceilings that restores
+    # the buffered chance constraint.
+    lower_mix, upper_mix = 0.0, 1.0
+    for _ in range(36):
+        mix = 0.5 * (lower_mix + upper_mix)
+        candidate = np.asarray(policy, dtype=float).copy()
+        candidate[:4] += mix * (upper_candidate[:4] - candidate[:4])
+        q_value, dust = metrics(candidate)
+        if q_value <= limit and dust <= dust_limit:
+            upper_mix = mix
+        else:
+            lower_mix = mix
+    repaired = np.asarray(policy, dtype=float).copy()
+    repaired[:4] += upper_mix * (upper_candidate[:4] - repaired[:4])
+
+    constraints = [
+        {
+            "type": "ineq",
+            "fun": lambda x: limit
+            - float(
+                np.quantile(twin.predict_scenarios(x, scenarios), design_confidence)
+            ),
+        },
+        {
+            "type": "ineq",
+            "fun": lambda x: dust_limit - twin.dust_load_index(x, regime_frame),
+        },
+    ]
+    local = minimize(
+        lambda x: power.predict_policy(x),
+        repaired,
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints,
+        options={"maxiter": 250, "ftol": 1e-8, "disp": False},
+    )
+    candidates = [repaired]
+    if local.success:
+        candidates.append(np.asarray(local.x, dtype=float))
+    feasible = []
+    for candidate in candidates:
+        q_value, dust = metrics(candidate)
+        if q_value <= limit + 1e-6 and dust <= dust_limit + 1e-6:
+            feasible.append(candidate)
+    if not feasible:
+        return np.asarray(policy, dtype=float), False
+    return min(feasible, key=power.predict_policy), True
+
+
 def _optimize_one(
     regime: int,
     regime_frame: pd.DataFrame,
@@ -184,6 +265,43 @@ def _optimize_one(
         confidence,
         dust_limit,
     )
+    verification_repair = False
+    if not bool(summary["feasible"]):
+        repair_scenarios = twin.scenario_pack(
+            regime_frame,
+            n_scenarios=verification_scenarios,
+            seed=seed + 200000,
+        )
+        repaired_policy, verification_repair = _repair_on_independent_scenarios(
+            policy=policy,
+            bounds=bounds,
+            regime_frame=regime_frame,
+            twin=twin,
+            power=power,
+            scenarios=repair_scenarios,
+            limit=limit,
+            design_confidence=design_confidence,
+            dust_limit=dust_limit,
+        )
+        if verification_repair:
+            policy = repaired_policy
+            # The reported audit remains independent of both training and the
+            # repair scenarios.
+            verification = twin.scenario_pack(
+                regime_frame,
+                n_scenarios=verification_scenarios,
+                seed=seed + 300000,
+            )
+            summary = _policy_summary(
+                policy,
+                regime_frame,
+                twin,
+                power,
+                verification,
+                limit,
+                confidence,
+                dust_limit,
+            )
     summary.update(
         {
             "regime": regime,
@@ -192,6 +310,7 @@ def _optimize_one(
             "local_success": bool(local_result.success),
             "design_confidence": design_confidence,
             "voltage_upper_factor": voltage_upper_factor,
+            "verification_repair": verification_repair,
         }
     )
     return policy, summary, training

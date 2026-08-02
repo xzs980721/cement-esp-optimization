@@ -227,7 +227,7 @@ $$"""
 
 {emission_formula}
 
-其中 $g_T$ 是以 125°C 为中心的温度修正，$g_L$ 是长振打周期引起的积灰/反电晕折减。基准去除指数由右删失运行点和质量守恒锚定为 $D_0={twin.d_ref:.4f}$。分场权重、温度和再飞扬系数由权威文献给出先验，并在计算中传播不确定性。
+其中 $g_T$ 以附件温度均值 {twin.temperature_optimum:.2f}°C 为归一化参考中心，尺度固定为 25°C；该中心不解释为普适最优温度。$g_L$ 是长振打周期引起的积灰/反电晕折减。基准去除指数由右删失运行点和质量守恒锚定为 $D_0={twin.d_ref:.4f}$。在四场未观测几何/迁移系数等效的最小信息假设下，分场权重按附件中位电压平方归一化得到；温度曲率和再飞扬系数采用文献先验，并在计算中传播不确定性。
 
 振打采用隐状态：极板尘负荷随捕集量累积，周期到达后大部分落入灰斗、小部分形成再飞扬脉冲。对未知振打相位积分后，95%排放分位数同时包含积灰效率损失和瞬时峰值风险。因此周期过长会积灰并放大单次峰值，过短则提高振打频率和机械能耗，存在内部折中点。
 
@@ -241,7 +241,7 @@ $$"""
 
 - 入口浓度近似按比例抬升出口浓度；流量增加缩短停留时间，使穿透率上升。
 - 电压通过迁移速度和去除指数发挥单调减排作用，边际减排收益随电压增大而递减。
-- 125°C附近模型效率最佳；偏离该温区时，电气特性和粉尘比电阻的不确定性使所需控制强度增加。
+- {twin.temperature_optimum:.2f}°C 是由附件均值确定的归一化参考中心；模型以钟形先验描述偏离参考温区后的有效迁移能力折减，但不声称该温度是真实最优点。
 - 振打周期不能只按“越长越省电”处理：长周期降低振打频率，却增加极板尘负荷、效率衰减和单次再飞扬峰值。
 
 证据边界如下：
@@ -481,6 +481,9 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
             "t_ref": twin.t_ref,
             "d_ref": twin.d_ref,
             "stage_weights": twin.stage_weights,
+            "temperature_reference_C": twin.temperature_optimum,
+            "temperature_scale_C": twin.temperature_scale,
+            "temperature_sensitivity": twin.temperature_sensitivity,
         },
         "regime_count": regimes.n_regimes,
         "high_regime": high_regime,

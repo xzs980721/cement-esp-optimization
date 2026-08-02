@@ -129,7 +129,15 @@ def load_and_audit_data(csv_path: str | Path, censor_threshold: float = 50.0) ->
         "complete_minute_grid": complete_minute_grid,
         "output_missing": int(output.isna().sum()),
         "output_censored": int((output >= censor_threshold).sum()),
-        "output_censored_fraction": float((output >= censor_threshold).mean()),
+        # Report the boundary share among valid readings.  A comparison with
+        # NaN evaluates to False, so taking the mean on the full Boolean series
+        # would silently put the 50 missing readings in the denominator.
+        "output_censored_fraction": float(
+            (output.dropna() >= censor_threshold).mean()
+        ),
+        "output_censored_fraction_all_rows": float(
+            (output >= censor_threshold).sum() / len(output)
+        ),
         "output_min": float(output.min()),
         "output_max": float(output.max()),
         "ordinary_ols_r2": _ordinary_r2(frame),
@@ -141,4 +149,3 @@ def load_and_audit_data(csv_path: str | Path, censor_threshold: float = 50.0) ->
     feature_summary["missing"] = frame.drop(columns="timestamp").isna().sum()
     correlations = frame.select_dtypes(include=[np.number]).corr()["C_out_mgNm3"].sort_values()
     return AuditResult(frame=frame, summary=summary, feature_summary=feature_summary, correlations=correlations)
-

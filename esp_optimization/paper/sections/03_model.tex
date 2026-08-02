@@ -16,12 +16,22 @@ D_t=D_{0,t}\frac{Q_0}{Q_t}\,g_\Theta(\Theta_t)\,
 \,g_M(\bm T_t,L_t).
 \label{eq:dindex}
 \end{equation}
-式中 $\sum_iw_{i,t}=1$，$Q_0,U_{i,0}$ 为数据中位参考点。$Q_0/Q_t$ 对应停留时间；$U_i^2$ 对应迁移驱动力及电场能耗的低阶近似。分场先验均值取
+式中 $\sum_iw_{i,t}=1$，$Q_0,U_{i,0}$ 为数据中位参考点。$Q_0/Q_t$ 对应停留时间；$U_i^2$ 对应迁移驱动力的低阶近似。附件没有分场出口浓度、二次电流和极板面积，无法独立回归四场效率。为避免手工指定，在四场未观测几何与迁移系数等效的最小信息假设下，令参考点各场贡献与 $U_{i,0}^2$ 成正比：
 \begin{equation}
-\bm w_0=(0.32,0.28,0.23,0.17),
+ w_{i,0}=\frac{U_{i,0}^2}{\sum_{j=1}^{4}U_{j,0}^2},\qquad
+\bm w_0=(0.2978,0.2988,0.2017,0.2017),
 \label{eq:weights}
 \end{equation}
-并用 Dirichlet 分布传播权重不确定性。该递减结构反映前级承担粗颗粒主捕集、末级承担精细捕集的工程特征，但不声称由附件单独估计。
+其中 $\bm U_0=(58.8,58.9,48.4,48.4)\kV$ 为附件中位电压。于是
+\[
+\sum_iw_{i,0}\left(\frac{U_i}{U_{i,0}}\right)^2
+=\frac{\sum_iU_i^2}{\sum_iU_{i,0}^2},
+\]
+即权重只是把 D--A 电压平方代理规范到参考点，不额外引入人为场序系数。计算中令
+\[
+\bm w\sim\operatorname{Dirichlet}(120\bm w_0),
+\]
+以传播等效假设与运行波动带来的不确定性；因此它是透明的代理权重，而非分场实测效率。
 
 由删失运行点 $\hat\mu_c$ 和参考入口浓度 $C_{\mathrm{in},0}=37.41\gNm$ 锚定
 \begin{equation}
@@ -32,14 +42,19 @@ D_0=\log\left(\frac{1000C_{\mathrm{in},0}R_0}{\hat\mu_c}\right)=6.6846,
 
 \subsubsection{温度、积灰与振打修正}
 
-高温会改变烟气密度、离子迁移及粉尘比电阻，实验研究表明温度影响具有明显非线性\cite{xu2015hightemp}。本文采用以 $125^\circ\mathrm C$ 为中心的钟形修正
+高温会改变烟气密度、离子迁移及粉尘比电阻，实验研究表明温度影响具有明显非线性\cite{xu2015hightemp}。附件温度均值为
+\begin{equation}
+\Theta_0=\frac{1}{n}\sum_{t=1}^{n}\Theta_t=126.008^\circ\mathrm C,
+\label{eq:tempref}
+\end{equation}
+故将其作为可复算的归一化参考中心，并采用钟形修正
 \begin{equation}
 g_\Theta(\Theta)=\exp\left[-\kappa_\Theta
-\left(\frac{\Theta-125}{s_\Theta}\right)^2\right],
-\qquad s_\Theta=40^\circ\mathrm C.
+\left(\frac{\Theta-\Theta_0}{s_\Theta}\right)^2\right],
+\qquad \kappa_\Theta=0.12,\quad s_\Theta=25^\circ\mathrm C.
 \label{eq:tempfactor}
 \end{equation}
-它不将 125$^\circ$C 解释为普适最优温度，而是用于描述本工况区间内偏离参考温区后的有效迁移能力折减。
+该形式可由 $\log g_\Theta$ 在参考点附近的二阶展开得到，保证修正为正且在参考点等于 1。$\Theta_0$ 来自附件数据；$\kappa_\Theta/s_\Theta^2$ 是文献机理约束下的先验曲率。本文不将 $126.008^\circ\mathrm C$ 解释为设备的普适最优温度，只用于描述本工况区间内偏离参考温区后的有效迁移能力折减。
 
 入口粉尘质量负荷的相对值为
 \begin{equation}
@@ -126,7 +141,7 @@ J(\bm x)=P(\bm x)+\Lambda\left[
 +\max\left(\frac{I_M}{1.45}-1,0\right)^2\right].
 \label{eq:penalty}
 \end{equation}
-最终策略用另一随机种子生成的 10,000 个独立情景检查 $q_{0.95}(C)\le L$。算法固定基础种子为 2026，以确保可复现。
+最终策略用另一随机种子生成的 10,000 个独立情景检查 $q_{0.95}(C)\le L$。若首次独立检查未通过，则只沿历史电压上界方向寻找最小安全补偿，并在第二组情景上以 97.5\% 设计分位精修；报告值再由第三组独立 10,000 情景审计。该补偿不改变工况或设备边界，且在结果表中单独标记。算法固定基础种子为 2026，以确保可复现。
 
 \subsection{调节优先级指标}
 

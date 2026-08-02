@@ -45,7 +45,7 @@ py -3.11 -m venv .venv
 powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1
 ```
 
-成品输出到 `output/pdf/Cement_ESP_Optimization_Paper.pdf`，编译辅助文件保存在 `build/latex/`，不污染论文源码目录。
+修正版成品输出到 `output/pdf/Cement_ESP_Optimization_Paper_Revised.pdf`，编译辅助文件保存在 `build/latex/`，不污染论文源码目录。
 
 所有随机过程固定基准种子 2026。模型口径、机会约束、先验和优化参数均在 `config/model.yaml` 中，不需要修改源码。
 
@@ -61,7 +61,7 @@ powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1
 - `tests/`：关键不变量、模型方向和结果验收测试。
 - `paper/`：A4 `ctexart` 正式论文、分章节源码与参考文献；`paper/reference_materials/` 单独归档公开原文与 DOI 元数据。
 - `build/latex/`：LaTeX 编译辅助文件。
-- `output/pdf/`：最终 21 页正式竞赛论文 PDF。
+- `output/pdf/`：最终正式竞赛论文 PDF。
 
 ## 结果解释边界
 

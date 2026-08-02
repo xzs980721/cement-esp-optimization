@@ -11,7 +11,7 @@
     "inv_T4": 53353.13773360577
   },
   "emission_references": {
-    "temp_ref": 126.5,
+    "temp_ref": 126.00774801587302,
     "c_in_ref": 37.41,
     "q_ref": 465546.5,
     "u_ref": [
@@ -28,15 +28,18 @@
     ],
     "d_ref": 6.684604805846858,
     "stage_weights": [
-      0.32,
-      0.28,
-      0.23,
-      0.17
-    ]
+      0.2977530557356889,
+      0.2987666824265379,
+      0.20174013091888662,
+      0.20174013091888662
+    ],
+    "temperature_reference_C": 126.00774801587302,
+    "temperature_scale_C": 25.0,
+    "temperature_sensitivity": 0.12
   },
   "regime_count": 8,
   "high_regime": 7,
   "low_regime": 1,
-  "weighted_power_10_kW": 2024.6795291156768,
-  "weighted_power_5_kW": 2139.2065930824697
+  "weighted_power_10_kW": 2038.3098435086572,
+  "weighted_power_5_kW": 2146.720851440059
 }

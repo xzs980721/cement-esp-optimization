@@ -20,7 +20,8 @@ def test_data_invariants():
     assert audit.summary["complete_minute_grid"]
     assert audit.summary["output_missing"] == 50
     assert audit.summary["output_censored"] == 5491
-    assert abs(audit.summary["output_censored_fraction"] - 0.5447420635) < 1e-9
+    assert abs(audit.summary["output_censored_fraction"] - 5491 / 10030) < 1e-12
+    assert abs(audit.summary["output_censored_fraction_all_rows"] - 5491 / 10080) < 1e-12
 
 
 def test_censored_normal_recovers_synthetic_parameters():
@@ -44,10 +45,15 @@ def test_power_model_accuracy_and_physical_signs():
 def test_emission_twin_directions():
     audit = load_and_audit_data(CSV, 50.0)
     twin = fit_emission_twin(audit, CONFIG["emission_prior"])
+    expected_weights = twin.u_ref**2 / np.sum(twin.u_ref**2)
+    assert np.allclose(twin.stage_weights, expected_weights)
+    assert np.isclose(twin.stage_weights.sum(), 1.0)
+    assert np.isclose(twin.temperature_optimum, audit.frame["Temp_C"].mean())
+    assert np.isclose(twin.temp_ref, audit.frame["Temp_C"].mean())
+    assert np.isclose(twin.temperature_scale, 25.0)
     reference = np.r_[twin.u_ref, twin.t_ref]
     raised_voltage = reference.copy(); raised_voltage[:4] *= 1.02
     long_cycles = reference.copy(); long_cycles[4:] *= 1.20
     base = twin.predict_deterministic(reference, twin.temp_ref, twin.c_in_ref, twin.q_ref)[0]
     assert twin.predict_deterministic(raised_voltage, twin.temp_ref, twin.c_in_ref, twin.q_ref)[0] < base
     assert twin.predict_deterministic(long_cycles, twin.temp_ref, twin.c_in_ref, twin.q_ref)[0] > base
-
