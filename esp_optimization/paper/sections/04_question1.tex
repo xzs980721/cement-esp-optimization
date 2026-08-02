@@ -27,14 +27,45 @@
 \label{fig:tempsurface}
 \end{figure}
 
-\subsection{振打周期与瞬时峰值}
+\subsection{振打周期与平均出口浓度}
 
-图\ref{fig:rapping} 给出式\eqref{eq:duststate} 的示意积灰轨迹以及不同周期下的相位叠加峰值。振打周期存在两类相反效应：
+为分析振打周期对平均排放的作用，在入口条件与电压给定时，令 $r_i=T_i/T_{i,0}$，则相位平均出口浓度可写为
+\begin{equation}
+\overline C_{\mathrm{out}}
+=1000C_{\mathrm{in}}\exp(-D_{\mathrm{eff}})R_{\mathrm{rap}},
+\label{eq:meanrapc}
+\end{equation}
+其中
+\begin{align}
+D_{\mathrm{eff}}
+&=D_0\frac{Q_0}{Q}g_\Theta(\Theta)S_U(\bm U)
+\exp\!\left[-\kappa_ML\sum_{j=1}^{4}w_j(r_j-1)_+^2\right],\label{eq:meanrapd}\\
+R_{\mathrm{rap}}
+&=1+\delta L\sum_{j=1}^{4}w_jr_j.\label{eq:meanrapr}
+\end{align}
+式\eqref{eq:meanrapr} 表示周期延长引起的相位平均再飞扬风险；式\eqref{eq:meanrapd} 则表示周期超过参考值后，积灰使有效去除指数降低。对 $T_i$ 求对数导数可得
+\begin{equation}
+\frac{\partial\ln\overline C_{\mathrm{out}}}{\partial T_i}
+=\frac{\delta Lw_i}{T_{i,0}R_{\mathrm{rap}}}
++\frac{2\kappa_MLw_i(r_i-1)_+D_{\mathrm{eff}}}{T_{i,0}}>0.
+\label{eq:rapmeanderivative}
+\end{equation}
+因此，在模型的历史工作区间内，延长任一电场的振打周期均提高平均出口浓度：当 $T_i\le T_{i,0}$ 时，该效应主要来自再飞扬项；当 $T_i>T_{i,0}$ 时，积灰导致的捕集能力下降进一步增强该效应。另一方面，式\eqref{eq:power} 给出 $\partial P/\partial T_i=-\gamma_i/T_i^2<0$，表明延长周期能够降低振打平均功率。由此形成平均排放风险与机械功率之间的基本权衡。
 
-\begin{itemize}
-  \item 周期延长使单位时间振打次数减少，振打机械能耗下降；但极板尘负荷升高、捕集效率折减，且单次脱落尘饼更大，峰值幅度上升。
-  \item 周期缩短降低单次积灰量和单次再飞扬风险，但会增加机械动作频率与振打平均功率；若四场同步振打，即使单场峰值较小，也可能在出口叠加。
-\end{itemize}
+\subsection{振打周期与瞬时排放峰值}
+
+设第 $i$ 电场在相邻两次振打间的有效积尘速率为 $\dot M_i$，振打时进入烟气的脱落比例为 $\eta_i$，则一次振打对应的再飞扬尘量近似为
+\begin{equation}
+M_{\mathrm{rap},i}\approx \eta_i\dot M_iT_i.
+\label{eq:rapmass}
+\end{equation}
+若该尘量在持续时间 $\Delta t_i$ 内进入流量为 $Q$ 的烟气，则相对峰值满足
+\begin{equation}
+C_{\mathrm{peak},i}-\overline C_{\mathrm{out}}
+\propto\frac{\eta_i\dot M_iT_i}{Q\Delta t_i}.
+\label{eq:rappeak}
+\end{equation}
+在 $\eta_i$、$\dot M_i$ 与 $\Delta t_i$ 局部稳定的条件下，单次峰值随 $T_i$ 近似线性增加；缩短周期能够减小单次尘饼脱落量，但会提高振打频率和机械功率。若多电场在相近时刻振打，各场脉冲还将在出口处叠加。
 
 \begin{figure}[H]
 \centering
@@ -43,8 +74,8 @@
 \label{fig:rapping}
 \end{figure}
 
-因此，振打周期不宜仅按降低机械能耗的目标取最大值。式\eqref{eq:rapfactor} 保留线性尘量项：周期越长，归一化积灰量和相位平均再飞扬风险越高；周期缩短所增加的机械动作能耗由功率模型中的 $1/T_i$ 项描述。二者共同构成排放风险与机械能耗之间的权衡，式\eqref{eq:dustconstraint} 则限制尘负荷不超过历史高负荷范围。由于缺少实际触发事件，图\ref{fig:rapping} 仅展示归一化相位和相对峰值。现场控制中可将四场触发相位按 $0,\frac14,\frac12,\frac34$ 周期错开，以降低多场峰值叠加风险。
+式\eqref{eq:rapmeanderivative} 与式\eqref{eq:rappeak} 分别描述周期对平均浓度和瞬时峰值的作用。由于附件缺少实际振打时刻以及秒级出口浓度，$\eta_i$ 与 $\Delta t_i$ 无法由数据估计，图\ref{fig:rapping} 因而仅表示归一化相位下的相对峰值。工程控制可将四场振打相位按 $0,\frac14,\frac12,\frac34$ 周期错开，以降低脉冲叠加风险；该措施不改变式\eqref{eq:meanrapc} 所描述的相位平均关系。
 
 \subsection{问题一结论的可信范围}
 
-附件数据能够支持出口浓度边界特征与能耗关系的分析，但不足以直接辨识各操作量对排放的净效应。因此，入口浓度、流量、电压、温度和振打周期的影响方向由物理结构与文献确定，并通过情景传播和关键参数 $\pm30\%$ 敏感性分析评价其稳定性。所得浓度曲线应理解为具有机理约束的风险外推结果。
+附件数据能够支持出口浓度边界特征、能耗关系和历史操作范围的估计，但不足以直接辨识各操作量对排放的净效应。因此，入口浓度、流量、电压、温度和振打周期的响应方向由物理结构与文献先验确定，并通过情景传播及关键参数 $\pm30\%$ 敏感性分析评价其稳定性。平均浓度的单调性属于数字孪生的解析结论，瞬时峰值结论属于尘量守恒下的相对关系，二者均需由低量程、高时间分辨率现场数据进一步标定。

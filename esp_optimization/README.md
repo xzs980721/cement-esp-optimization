@@ -8,6 +8,7 @@
 - 原始排放标签无法识别控制效应；排放外推使用删失运行点锚定的物理信息模型，并单独报告先验敏感性。
 - 能耗模型采用 `U_i²` 与 `1/T_i`，全样本解释度约 99.8%，逐日留一 RMSE 约 6 kW。
 - 10 mg/Nm³在历史操作边界内可行；5 mg/Nm³有部分工况在原边界内不可行。按1%步长筛查后，电压上界放宽2%是首个全工况可行情景，3%仅作为容量裕量敏感性。
+- 分层控制依据尘负荷约束状态确定动作顺序：R1--R3采用电压优先，R4--R8采用周期安全松弛优先；R2首先调节U3，R8首先调节T3/T4。
 
 详细结果见 [answers/逐问解答.md](answers/逐问解答.md)，正式论文源码见 [paper/main.tex](paper/main.tex)。
 
@@ -32,6 +33,7 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts\run_all.py
 .\.venv\Scripts\python.exe scripts\audit_regime_settings.py
+.\.venv\Scripts\python.exe scripts\run_hierarchical_priority_analysis.py
 ```
 
 运行测试：
@@ -46,7 +48,7 @@ py -3.11 -m venv .venv
 powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1
 ```
 
-正式论文输出到 `output/pdf/Cement_ESP_Optimization_Paper_Final.pdf`，编译辅助文件保存在 `build/latex/`，不污染论文源码目录。
+正式论文输出到 `output/pdf/Cement_ESP_Optimization_Paper.pdf`，编译辅助文件保存在 `build/latex/`，不污染论文源码目录。
 
 所有随机过程固定基准种子 2026。模型口径、机会约束、先验和优化参数均在 `config/model.yaml` 中，不需要修改源码。
 
@@ -57,7 +59,7 @@ powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1
 - `scripts/run_all.py`：端到端运行入口。
 - `answers/逐问解答.md`：四问推导与数值结论。
 - `outputs/tables/`：可直接引用到论文的 UTF-8 CSV 表。
-- `outputs/figures/`：11 幅论文级 PNG 图。
+- `outputs/figures/`：数据审计、模型诊断、工况识别、策略比较与分层控制图。
 - `outputs/models/`、`outputs/logs/`：模型摘要和数据审计日志。
 - `tests/`：关键不变量、模型方向和结果验收测试。
 - `paper/`：A4 `ctexart` 正式论文、分章节源码与参考文献；`paper/reference_materials/` 单独归档公开原文与 DOI 元数据。

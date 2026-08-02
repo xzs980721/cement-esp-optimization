@@ -2,7 +2,7 @@
 
 \subsection{条件 \texorpdfstring{$5\mgNm$}{5 mg/Nm3} 的完整参数表}
 
-表\ref{tab:a5u}--\ref{tab:a5t} 是问题四 2\% 最小可行电压上界扩展情景的完整策略，用于复核计算，不应未经设备校核直接下发。
+表\ref{tab:a5u}--\ref{tab:a5t} 给出问题四 2\% 最小可行电压上界扩展情景的完整策略，用于数值复核；工程应用前须完成设备能力与安全边界校核。
 
 \begin{table}[H]
 \centering
@@ -89,6 +89,9 @@ Dirichlet 集中度 & 120 & 权重平均标准差约 0.039，并检验 60 与 24
 设计分位 & 97.5\% & 比最终 95\% 约束预留 2.5 个百分点有限样本裕量\\
 差分进化规模 & 种群 72，90 代 & 八变量下约 6,500 次全局评价，再用 SLSQP 精修\\
 罚系数 $\Lambda$ & $10^6$ & 1\% 相对超限产生约 100 kW 罚值，优先保证可行性\\
+活跃约束容差 & $10^{-4}$ & 仅用于判定 $I_M=1.45$ 附近的浮点数值边界\\
+局部反事实步长 & 1\% & 兼顾导数局部性与蒙特卡洛数值分辨率，并在变量边界使用反向差分\\
+周期并列阈值 & 2\% & 收益差异低于局部扰动与情景抽样的分辨尺度时报告并列动作\\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -99,17 +102,18 @@ Dirichlet 集中度 & 120 & 权重平均标准差约 0.039，并检验 60 与 24
 \begin{verbatim}
 python scripts/run_all.py --config config/model.yaml
 python scripts/audit_regime_settings.py --config config/model.yaml
+python scripts/run_hierarchical_priority_analysis.py
 pytest -q
 \end{verbatim}
 即可复现四个问题的数值结果、图表及工况参数比较，并通过自动化测试核验主要计算关系。固定随机种子为 2026，以保证随机情景生成和优化结果具有可重复性。
 
-\subsection{现场部署检查表}
+\subsection{工程实施前核查项目}
 
 \begin{enumerate}
   \item 更换或并联低量程出口粉尘仪，确认 $10\mgNm$ 附近不再封顶；
   \item 接入四场二次电流、火花率、实际振打时刻和灰斗料位；
   \item 完成小幅单变量阶跃，重新标定 $D_0$ 和分场权重；
   \item 进行不少于一周的离线跟踪验证，检查 95\% 覆盖率、切换频率和峰值叠加；
-  \item 核验电压、电流、绝缘与输灰能力后，才可启用 $5\mgNm$ 条件策略；
+  \item 完成电压、电流、绝缘与输灰能力核验后，方可启用 $5\mgNm$ 条件策略；
   \item 保留历史安全策略作为通信故障、仪表漂移和模型异常时的自动回退。
 \end{enumerate}
