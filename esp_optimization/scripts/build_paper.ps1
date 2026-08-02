@@ -16,15 +16,24 @@ if ([string]::IsNullOrWhiteSpace($TectonicPath)) {
         $portable = Join-Path ([System.IO.Path]::GetTempPath()) "codex_tectonic_0.16.9\tectonic.exe"
         if (Test-Path -LiteralPath $portable) {
             $TectonicPath = $portable
+        } else {
+            $bundled = Join-Path $env:USERPROFILE ".codex\.tmp\bundled-marketplaces\openai-bundled\plugins\latex\bin\tectonic.exe"
+            if (Test-Path -LiteralPath $bundled) {
+                $TectonicPath = $bundled
+            }
         }
     }
 }
 
-if (-not (Test-Path -LiteralPath $TectonicPath)) {
+if ([string]::IsNullOrWhiteSpace($TectonicPath) -or -not (Test-Path -LiteralPath $TectonicPath)) {
     throw "Tectonic was not found. Install it from https://tectonic-typesetting.github.io/ or pass -TectonicPath."
 }
 
 New-Item -ItemType Directory -Force -Path $buildDir, $finalDir | Out-Null
+$builtPdf = Join-Path $buildDir "main.pdf"
+if (Test-Path -LiteralPath $builtPdf) {
+    Remove-Item -LiteralPath $builtPdf -Force
+}
 Push-Location $paperDir
 try {
     & $TectonicPath -X compile main.tex --outdir $buildDir --keep-logs --keep-intermediates
@@ -35,5 +44,8 @@ try {
     Pop-Location
 }
 
-Copy-Item -LiteralPath (Join-Path $buildDir "main.pdf") -Destination $finalPdf -Force
+if (-not (Test-Path -LiteralPath $builtPdf)) {
+    throw "LaTeX compilation did not produce main.pdf."
+}
+Copy-Item -LiteralPath $builtPdf -Destination $finalPdf -Force
 Write-Output $finalPdf

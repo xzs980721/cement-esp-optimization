@@ -2,7 +2,7 @@
 
 \subsection{工况数选择与时序分割结果}
 
-表\ref{tab:kselect} 显示 $K=3$--8 的选择结果。所有候选均满足占比与驻留约束，BIC 随 $K$ 增加而下降，并在候选上限 $K=8$ 处达到最小。$K=8$ 还保留了 120 分钟、均温 $154.8^\circ\mathrm C$ 的高温短状态 R1；若强制更少状态，该异常段会与常温低负荷状态混合，削弱安全解释。因此选择 8 类工况。
+表\ref{tab:kselect} 显示 $K=3$--8 的选择结果。所有候选均满足占比与驻留约束，BIC 随 $K$ 增加而下降，并在候选上限 $K=8$ 处达到最小。由于最小值落在搜索边界，BIC 只能说明“8 类优于本组更少状态”，不能证明 8 是全局唯一类别数。本文把 $K=8$ 作为可执行的工作分辨率，理由是其同时保留了 120 分钟、均温 $154.8^\circ\mathrm C$ 的高温短状态 R1；若强制更少状态，该异常段会与常温低负荷状态混合，削弱安全解释。上线时应随新增数据重新评估状态数。
 
 \begin{table}[H]
 \centering
@@ -26,12 +26,12 @@ $K$ & BIC & 轮廓系数 & 最小占比/\% & 最短中位驻留/min & 状态转�
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.97\textwidth]{fig04_regime_segmentation.png}
+\includegraphics[width=0.84\textwidth]{fig04_regime_segmentation.png}
 \caption{时间正则化 GMM 的工况投影与时序分割}
 \label{fig:regimes}
 \end{figure}
 
-8 类工况中心见表\ref{tab:centers}。编号按入口质量负荷从低到高排列，R2 和 R8 分别作为后续低、高负荷代表；R1 虽负荷最低，却是独立的高温异常状态。
+表\ref{tab:centers} 列出工况中心。R2、R8 分别代表低、高负荷；R1 虽低，但属独立高温异常。
 
 \begin{table}[H]
 \centering
@@ -61,13 +61,13 @@ R8 & 870  & 8.63 & 118.1 & 46.090 & 480.9 & 22.166 & 870\\
 \label{fig:centerheat}
 \end{figure}
 
-\subsection{能耗模型拟合与时序验证}
+\subsection{总功率模型拟合与时序验证}
 
 式\eqref{eq:power} 的截距为 $73.7805\kW$，电压平方项系数在 0.0844--0.0853 之间，振打频率项系数在 $5.335\times10^4$--$5.471\times10^4$ 之间，见表\ref{tab:powercoef}。接近的分场系数与四套相似整流变压器/振打机构相符。
 
 \begin{table}[H]
 \centering
-\caption{能耗代理模型系数}
+\caption{总功率代理模型系数}
 \label{tab:powercoef}
 \begin{tabular}{ccccccccc}
 \toprule
@@ -87,17 +87,17 @@ R8 & 870  & 8.63 & 118.1 & 46.090 & 480.9 & 22.166 & 870\\
 \label{fig:powerfit}
 \end{figure}
 
-\subsection{\texorpdfstring{$10\mgNm$}{10 mg/Nm3} 下的最低电耗组合}
+\subsection{\texorpdfstring{$10\mgNm$}{10 mg/Nm3} 下的最低功率组合}
 
 表\ref{tab:policyu10} 与表\ref{tab:policyt10} 分别给出四场电压和振打周期。所有结果均位于历史边界内，并通过独立 10,000 情景的 95\% 机会约束复核。
 
 \begin{table}[H]
 \centering
-\caption{$10\mgNm$ 限值下的最优电压与电耗}
+\caption{$10\mgNm$ 限值下的最优电压与总功率}
 \label{tab:policyu10}
 \begin{tabular}{ccccccc}
 \toprule
-工况 & $U_1$/kV & $U_2$/kV & $U_3$/kV & $U_4$/kV & 电耗/kW\\
+工况 & $U_1$/kV & $U_2$/kV & $U_3$/kV & $U_4$/kV & 总功率/kW\\
 \midrule
 R1 & 69.340 & 70.242 & 59.200 & 55.937 & 2049.8\\
 R2 & 70.900 & 68.147 & 59.200 & 44.743 & 1947.6\\
@@ -138,4 +138,4 @@ R8 & 245.4 & 256.3 & 414.4 & 463.8 & 9.209 & 97.66 & 1.450\\
 \label{fig:policyheat}
 \end{figure}
 
-低负荷工况允许较长振打周期，而 R4--R8 的尘负荷指数达到上限 1.45，振打约束成为活跃约束。R6 的达标概率最低但仍为 95.63\%，说明它位于排放约束边界附近；实际部署时应为仪表漂移和设备老化保留额外工程裕量。需要注意，R1--R8 的“相对历史节能率”中存在负值，这是因为附件的历史出口浓度约在 $50\mgNm$ 附近，不能把历史低功率点与 $10\mgNm$ 的严格外推策略作同等达标比较；本文因此不把这些负值解释为优化失效。
+低负荷工况允许较长振打周期，而 R4--R8 的尘负荷指数达到上限 1.45，振打约束成为活跃约束。R6 的达标概率最低但仍为 95.63\%，说明它位于排放约束边界附近；实际部署时应为仪表漂移和设备老化保留额外工程裕量。需要注意，R1--R8 的“相对历史节能率”中存在负值，这是因为附件的历史出口浓度约在 $50\mgNm$ 附近，不能把历史低功率点与 $10\mgNm$ 的严格外推策略作同等达标比较；本文因此不把这些负值解释为优化失效。表中连续解是控制设定中心，现场下发前应按 PLC 分辨率将电压取至 $0.1\kV$、周期取至 $1\mathrm s$，并对取整策略重新执行机会约束复核。

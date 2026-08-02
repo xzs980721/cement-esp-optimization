@@ -81,7 +81,7 @@ C_{\mathrm{out}}=1000C_{\mathrm{in}}\exp(-D)R_{\mathrm{rap}}\exp(\varepsilon),
 
 \subsection{时间正则化典型工况划分}
 
-对原始分钟数据保留完整时间顺序。首先以 15 分钟居中中位数平滑温度、入口浓度和流量，构造
+对原始分钟数据保留完整时间顺序。题目二突出入口浓度和温度的波动，故将二者作为工况主轴；考虑到流量同时决定停留时间和入口质量负荷，再把流量作为辅助描述量。首先以 15 分钟居中中位数平滑三个变量，构造
 \begin{equation}
 \bm z_t=\left(\Theta_t,\log C_{\mathrm{in},t},\log Q_t\right)^\top.
 \end{equation}
@@ -102,7 +102,7 @@ p(\bm z_t)=\sum_{k=1}^{K}\pi_k\mathcal N(\bm z_t\mid\bm\mu_k,\bm\Sigma_k).
 
 \subsection{能耗代理模型}
 
-电场电耗在工作区间内与电压平方近似相关；振打机构的平均功耗与动作频率 $1/T_i$ 相关，多电场节能控制研究也支持按场分配能量的思路\cite{li2013ga}。建立
+电场功率在工作区间内与电压平方近似相关；振打机构的平均功率与动作频率 $1/T_i$ 相关，多电场节能控制研究也支持按场分配能量的思路\cite{li2013ga}。附件字段 $P_{\mathrm{total}}$ 的单位为 kW，故本文先建立总功率模型；当比较时段相同时，最小化功率与最小化电量 $E=P\Delta t$ 等价。建立
 \begin{equation}
 P(\bm x)=\beta_0+\sum_{i=1}^{4}\beta_iU_i^2
 +\sum_{i=1}^{4}\gamma_i\frac{1}{T_i}+\epsilon_P.

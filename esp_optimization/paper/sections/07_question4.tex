@@ -8,11 +8,11 @@
 
 \subsection{各工况电耗增幅}
 
-条件情景的结果见表\ref{tab:q4} 和图\ref{fig:q4}。8 类工况均通过 95\% 机会约束，电耗增幅为 5.22\%--6.11\%。
+条件情景的结果见表\ref{tab:q4} 和图\ref{fig:q4}。数据字段 $P_{\mathrm{total}}$ 的单位为 kW，故表中直接比较的是总功率；在相同工况驻留时间下，电量 $E=P\Delta t$ 的增幅与功率增幅相同。8 类工况均通过 95\% 机会约束，等时电耗增幅为 5.22\%--6.11\%。
 
 \begin{table}[H]
 \centering
-\caption{$10\rightarrow5\mgNm$ 的可行性与条件电耗增幅}
+\caption{$10\rightarrow5\mgNm$ 的可行性、条件功率与等时电耗增幅}
 \label{tab:q4}
 \begin{tabular}{ccccccc}
 \toprule
@@ -51,13 +51,13 @@ R8 & 8.63 & 2138.2 & 否 & 2251.2 & 是 & 5.285\\
 \end{equation}
 该区间反映情景抽样与优化不确定性，不包含设备老化、未观测二次电流或先验整体失配。
 
-\subsection{增量电耗归因}
+\subsection{增量功率归因}
 
 将式\eqref{eq:power} 在 $10$ 与条件 $5\mgNm$ 策略间逐项相减，按工况频率加权，得到表\ref{tab:attrib}。$U_4$ 承担约一半的增量，说明限值收紧后末级精细捕集成为主要杠杆；周期项净增量接近零，是因为其主要用于重新分配尘负荷风险，而非直接承担平均电耗增长。
 
 \begin{table}[H]
 \centering
-\caption{全周期增量电耗的分项归因}
+\caption{全周期增量功率的分项归因}
 \label{tab:attrib}
 \begin{tabular}{cccccccccc}
 \toprule

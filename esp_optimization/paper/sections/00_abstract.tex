@@ -1,22 +1,22 @@
-\section*{摘要}
-\addcontentsline{toc}{section}{摘要}
+\thispagestyle{plain}
+\begin{center}
+  \vspace*{-1.2em}
+  {\zihao{2}\heiti\bfseries 删失观测下水泥电除尘器的\\[0.20em]
+  物理信息数字孪生与协同优化\par}
+  \vspace{0.9em}
+  {\zihao{-3}\heiti\bfseries 摘\quad 要}
+\end{center}
 
-针对水泥窑尾四电场电除尘器在动态工况下“排放达标—电耗最低—振打稳定”三目标难以兼顾的问题，本文基于连续 7 天、分钟级共 10,080 条运行数据，提出一条\textbf{右删失诊断—物理信息数字孪生—时序工况识别—机会约束协同优化}的建模链。核心难点在于出口浓度有 54.47\% 的有效读数恰好等于仪表上限 $50\mgNm$，且出口浓度对全部工况与操作量的普通线性解释度仅为 $R^2=0.000815$。因此，本文不以高阶经验回归掩盖不可识别性，而将观测上限视为右删失，使用删失正态似然估计运行点；再以 Deutsch--Anderson 指数穿透机理为骨架，引入温度修正、分场电压贡献、极板积灰和振打再飞扬因子，通过文献先验与数据锚定构造可审计的排放数字孪生。
+\begin{spacing}{1.15}
+针对水泥窑尾四电场电除尘器在动态工况下难以兼顾排放、功率与振打稳定的问题，本文基于连续 7 天、共 10,080 条分钟数据，建立“数据可信性诊断—物理信息数字孪生—时序工况识别—机会约束优化”的协同控制框架。研究首先区分附件能够识别的结论与依赖机理先验的域外推断，避免用复杂回归掩盖数据缺陷。
 
-在工况划分方面，对温度、入口浓度对数和流量对数进行 15 分钟稳健平滑，以全协方差高斯混合模型描述局部工况，并用 Viterbi 转移惩罚抑制分钟级抖动。综合 BIC、状态占比和驻留时间约束，得到 8 类典型工况，其中入口粉尘质量负荷从 $1.121\times10^7$ 增至 $2.217\times10^7\,\mathrm{g/h}$。能耗侧建立 $U_i^2$ 与 $1/T_i$ 的稳健代理模型，全样本 $R^2=0.9979$，逐日留一验证平均 $R^2=0.9866$、RMSE 为 $5.96\kW$。
+针对问题一，出口浓度的 10,030 个有效读数中有 54.47\% 恰好位于 $50\mgNm$ 边界，且所有读数均不超过该值，呈现显著的上限堆积。本文将“疑似仪表上限删失”作为工作假设，以删失正态似然估计当前闭环运行点，得到 $\hat\mu_c=50.036\mgNm$、$\hat\sigma_c=0.313\mgNm$；普通线性模型仅有 $R^2=0.000815$，说明附件不足以直接辨识操作量的排放净效应。进一步以 Deutsch--Anderson 指数穿透关系为骨架，引入流量停留时间、温度修正、分场电压贡献、极板积灰及振打再飞扬，构造可审计的排放数字孪生；由于没有实际振打触发时刻，峰值只作隐相位风险分析，不伪造分钟级因果证据。
 
-对每类工况，在历史安全边界内联合优化四场电压与四场振打周期。目标为最小化预测电耗，约束 95\% 情景下出口浓度不超过限值，并同时限制极板尘负荷。采用固定种子 2026 的差分进化搜索与 SLSQP 精修，再用独立 10,000 次蒙特卡洛检验。$10\mgNm$ 限值下，8 类工况均通过复核，最优电耗为 $1947.6$--$2138.2\kW$；低、高负荷代表工况的达标概率分别为 97.49\% 和 97.66\%。边际收益分析表明，常规工况优先调节第三、第一电场电压；当尘负荷约束活跃时，应先缩短并错开振打周期，再调整电压。
+针对问题二，对温度和入口浓度进行 15 分钟稳健平滑，并把流量作为辅助负荷信息，采用 GMM 与 Viterbi 转移惩罚划分连续工况。在候选集合 $K=3$--8 内，结合 BIC、状态占比、驻留时间和高温异常段的可解释性，取 8 类典型工况。以 $U_i^2$ 和 $1/T_i$ 建立总功率代理模型，全样本 $R^2=0.9979$，逐日留一平均 $R^2=0.9866$、RMSE 为 $5.96\kW$。在历史操作边界内联合优化四场电压和振打周期，经独立 10,000 次蒙特卡洛复核，$10\mgNm$ 下八类工况的达标概率均超过 95\%，最优总功率为 $1947.6$--$2138.2\kW$。
 
-当限值降至 $5\mgNm$ 时，历史边界内有 3 类工况不可行。仅在四场电压历史上界放宽 3\%、振打周期边界不变的\textbf{条件仿真}中，8 类工况全部可行：按历史频率加权的电耗由 $2024.7\kW$ 增至 $2139.2\kW$，增幅为 \textbf{5.66\%}；最高负荷工况增幅为 \textbf{5.29\%}，12 组独立重采样得到 95\% 区间 $[5.05\%,6.55\%]$。结果表明，严格限值下增量能耗主要由电压强化承担，且末级电场、电场错峰振打和入口负荷前馈是最具操作价值的控制环节。
+针对问题三，选择稳定低负荷 R2 与最高质量负荷 R8。低负荷允许延长振打周期并降低末级电压；高负荷下尘负荷约束活跃，应先缩短并错开振打周期，再强化第三、第一电场并保留末级余量。单变量反事实试验表明，电压负责降低稳态穿透，振打负责控制积灰和瞬时峰值，二者的优先级由当前活跃约束决定，而非固定排序。
 
-\noindent\textbf{关键词：} 电除尘器；右删失；物理信息数字孪生；时序高斯混合；机会约束；振打再飞扬；节能优化
+针对问题四，在原历史边界内，R1、R7、R8 对 $5\mgNm$ 不可行，故不存在无条件的全工况统一增幅。仅在电压上界放宽 3\%、振打边界不变的条件情景下，八类工况全部可行；按工况频率加权，总功率由 $2024.68\kW$ 增至 $2139.21\kW$，等驻留时间下电量增幅为 \textbf{5.66\%}。最高负荷工况增幅为 \textbf{5.29\%}，95\% 重采样区间为 $[5.05\%,6.55\%]$，其中 50.76\% 的增量由末级电场承担。结果为严格限值下的设备扩容、入口负荷前馈与四场错峰振打提供了定量依据。
+\end{spacing}
 
-\vspace{1.0em}
-\section*{Abstract}
-\addcontentsline{toc}{section}{Abstract}
-
-This paper develops a risk-aware collaborative control framework for a four-field electrostatic precipitator in a cement kiln system. The minute-level dataset contains 10,080 records, while 54.47\% of the valid outlet readings are exactly at the instrument ceiling of $50\mgNm$. Treating the ceiling as right censoring reveals that the direct linear explanatory power of all operating variables for the measured outlet is only $R^2=0.000815$. We therefore separate data-identifiable conclusions from physics-prior extrapolation and construct a physics-informed digital twin based on the Deutsch--Anderson penetration law, temperature correction, field-wise voltage contribution, plate loading, and rapping re-entrainment.
-
-A temporally regularized Gaussian mixture model partitions the process into eight regimes after robust smoothing and scaling. A power surrogate using $U_i^2$ and $1/T_i$ achieves a full-sample $R^2$ of 0.9979 and a leave-one-day-out mean $R^2$ of 0.9866. For each regime, differential evolution followed by SLSQP minimizes power under a 95\% chance constraint and a plate-load constraint. All regimes satisfy the $10\mgNm$ limit in independent 10,000-scenario verification. Tightening the limit to $5\mgNm$ makes three regimes infeasible within historical bounds; under an explicitly conditional 3\% extension of the voltage upper bounds, the frequency-weighted power increases by 5.66\%, while the highest-load regime increases by 5.29\% with a 95\% resampling interval of $[5.05\%,6.55\%]$.
-
-\noindent\textbf{Keywords:} electrostatic precipitator; right censoring; physics-informed digital twin; temporal regime segmentation; chance-constrained optimization; rapping re-entrainment
+\noindent\textbf{关键词：} 电除尘器；上限删失；物理信息数字孪生；时序工况；机会约束；协同优化

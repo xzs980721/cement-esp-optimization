@@ -61,7 +61,7 @@ powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1
 - `tests/`：关键不变量、模型方向和结果验收测试。
 - `paper/`：A4 `ctexart` 正式论文、分章节源码与参考文献。
 - `build/latex/`：LaTeX 编译辅助文件。
-- `output/pdf/`：最终 24 页正式 PDF。
+- `output/pdf/`：最终 21 页正式竞赛论文 PDF。
 
 ## 结果解释边界
 
