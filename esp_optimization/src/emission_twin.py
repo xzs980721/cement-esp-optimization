@@ -13,6 +13,32 @@ U_COLUMNS = [f"U{i}_kV" for i in range(1, 5)]
 T_COLUMNS = [f"T{i}_s" for i in range(1, 5)]
 
 
+def _derive_stage_weights(u_ref: np.ndarray, prior: dict[str, Any]) -> np.ndarray:
+    """Return a transparent prior center for the four field contributions."""
+    method = prior.get("stage_weight_method", "configured")
+    if method == "reference_voltage_squared":
+        raw = np.asarray(u_ref, dtype=float) ** 2
+    elif method == "configured":
+        raw = np.asarray(prior["stage_weights"], dtype=float)
+    else:
+        raise ValueError(f"Unknown stage-weight method: {method}")
+    if raw.shape != (4,) or np.any(~np.isfinite(raw)) or np.any(raw <= 0):
+        raise ValueError("Stage weights must contain four positive finite values.")
+    return raw / raw.sum()
+
+
+def _derive_temperature_reference(frame: pd.DataFrame, prior: dict[str, Any]) -> float:
+    """Return the documented operating-temperature reference."""
+    method = prior.get("temperature_reference_method", "data_mean")
+    if method == "data_mean":
+        reference = float(frame["Temp_C"].mean())
+    else:
+        raise ValueError(f"Unknown temperature-reference method: {method}")
+    if not np.isfinite(reference):
+        raise ValueError("Temperature reference must be finite.")
+    return reference
+
+
 def _lognormal_draws(rng: np.random.Generator, mean: float, relative_sd: float, n: int) -> np.ndarray:
     cv2 = relative_sd**2
     sigma2 = np.log1p(cv2)
@@ -186,13 +212,12 @@ class EmissionTwin:
 def fit_emission_twin(audit: AuditResult, prior: dict[str, Any]) -> EmissionTwin:
     frame = audit.frame
     censor_fit = audit.summary["censored_normal"]
-    temp_ref = float(frame["Temp_C"].median())
+    temp_ref = _derive_temperature_reference(frame, prior)
     c_in_ref = float(frame["C_in_gNm3"].median())
     q_ref = float(frame["Q_Nm3h"].median())
     u_ref = frame[U_COLUMNS].median().to_numpy(dtype=float)
     t_ref = frame[T_COLUMNS].median().to_numpy(dtype=float)
-    stage_weights = np.asarray(prior["stage_weights"], dtype=float)
-    stage_weights = stage_weights / stage_weights.sum()
+    stage_weights = _derive_stage_weights(u_ref, prior)
 
     rap_at_reference = 1.0 + float(prior["rapping_amplitude"]) + float(
         prior["rapping_frequency_penalty"]
@@ -230,9 +255,21 @@ def fit_emission_twin(audit: AuditResult, prior: dict[str, Any]) -> EmissionTwin
                 "status": "弱识别",
             },
             {
-                "quantity": "分场权重/温度/积灰/再飞扬系数",
+                "quantity": "分场权重",
+                "evidence": "附件中位电压+D-A电压平方代理",
+                "diagnostic": "w=" + np.array2string(stage_weights, precision=4, separator=","),
+                "status": "代理识别",
+            },
+            {
+                "quantity": "温度参考中心",
+                "evidence": "附件温度均值",
+                "diagnostic": f"Theta_ref={temp_ref:.3f} C",
+                "status": "可识别",
+            },
+            {
+                "quantity": "温度/积灰/再飞扬系数",
                 "evidence": "物理先验",
-                "diagnostic": "统一传播30%相对不确定性",
+                "diagnostic": "基准传播并作30%压力测试",
                 "status": "先验主导",
             },
         ]
@@ -248,7 +285,7 @@ def fit_emission_twin(audit: AuditResult, prior: dict[str, Any]) -> EmissionTwin
         t_ref=t_ref,
         stage_weights=stage_weights,
         stage_weight_concentration=float(prior["stage_weight_concentration"]),
-        temperature_optimum=float(prior["temperature_optimum_C"]),
+        temperature_optimum=temp_ref,
         temperature_sensitivity=float(prior["temperature_sensitivity"]),
         temperature_scale=float(prior["temperature_scale_C"]),
         plate_penalty=float(prior["plate_penalty"]),
@@ -260,4 +297,3 @@ def fit_emission_twin(audit: AuditResult, prior: dict[str, Any]) -> EmissionTwin
         d_ref=d_ref,
         identifiability=identifiability,
     )
-

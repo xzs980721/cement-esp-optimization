@@ -17,9 +17,13 @@ regimes:
   bic_tie_tolerance: 10.0
 
 emission_prior:
-  stage_weights: [0.32, 0.28, 0.23, 0.17]
+  # With unobserved field geometry/migration coefficients treated equally,
+  # the D-A voltage proxy gives w_i = U_ref_i^2 / sum_j U_ref_j^2.
+  stage_weight_method: reference_voltage_squared
   stage_weight_concentration: 120.0
-  temperature_optimum_C: 125.0
+  # Use the attachment mean as a reproducible operating reference; it is not
+  # interpreted as a universally optimal ESP temperature.
+  temperature_reference_method: data_mean
   temperature_sensitivity: 0.12
   temperature_scale_C: 25.0
   plate_penalty: 0.18
