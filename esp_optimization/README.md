@@ -7,7 +7,7 @@
 - `C_out=50` 呈现显著边界堆积，本文将其作为疑似仪表上限删失进行建模，不做比例换算，并单独报告该假设的适用边界。
 - 原始排放标签无法识别控制效应；排放外推使用删失运行点锚定的物理信息模型，并单独报告先验敏感性。
 - 能耗模型采用 `U_i²` 与 `1/T_i`，全样本解释度约 99.8%，逐日留一 RMSE 约 6 kW。
-- 10 mg/Nm³在历史操作边界内可行；5 mg/Nm³有部分工况在原边界内不可行。按1%步长筛查后，电压上界放宽2%是首个全工况可行情景，3%仅作为容量裕量敏感性。
+- 10 mg/Nm³在历史操作边界内可行；5 mg/Nm³有部分工况在原边界内不可行。问题四直接采用电压上界为历史上界110%的宽边界情景，八类工况均通过独立复核，全周期加权电耗增幅为5.18%。
 - 分层控制依据尘负荷约束状态确定动作顺序：R1--R3采用电压优先，R4--R8采用周期安全松弛优先；R2首先调节U3，R8首先调节T3/T4。
 
 详细结果见 [answers/逐问解答.md](answers/逐问解答.md)，正式论文源码见 [paper/main.tex](paper/main.tex)。
@@ -46,9 +46,10 @@ py -3.11 -m venv .venv
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1
+powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1 -OutputName Cement_ESP_Optimization_Paper_110pct.pdf
 ```
 
-正式论文输出到 `output/pdf/Cement_ESP_Optimization_Paper.pdf`，编译辅助文件保存在 `build/latex/`，不污染论文源码目录。
+默认正式论文输出到 `output/pdf/Cement_ESP_Optimization_Paper.pdf`；可用 `-OutputName` 指定其他文件名。编译辅助文件保存在 `build/latex/`，不污染论文源码目录。
 
 所有随机过程固定基准种子 2026。模型口径、机会约束、先验和优化参数均在 `config/model.yaml` 中，不需要修改源码。
 

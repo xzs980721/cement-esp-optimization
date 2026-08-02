@@ -56,6 +56,9 @@ optimization:
   differential_evolution_popsize: 9
   dust_load_limit: 1.45
   penalty_scale: 1000000.0
-  q4_voltage_screen_factor: 1.01
-  q4_voltage_upper_extension_factor: 1.02
-  q4_voltage_relief_factor: 1.03
+  # A narrower feasible solution is used only as an optimizer warm start.
+  q4_voltage_screen_factor: 1.02
+  # Question 4 uses a deliberately wide engineering scenario rather than
+  # selecting the smallest feasible uplift: each historical voltage upper
+  # bound is multiplied by 1.10, while all rapping bounds remain unchanged.
+  q4_voltage_upper_extension_factor: 1.10

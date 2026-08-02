@@ -335,6 +335,7 @@ def _write_report(
     stability: pd.DataFrame,
     q4_screen: pd.DataFrame,
     bootstrap: pd.DataFrame,
+    voltage_upper_factor: float,
     path: Path,
 ) -> None:
     q2 = revalidation10.merge(
@@ -416,8 +417,10 @@ def _write_report(
     valid_bootstrap = bootstrap.loc[bootstrap["feasible_10"] & bootstrap["feasible_5"]]
     interval = np.quantile(valid_bootstrap["increase_pct"], [0.025, 0.975])
     raw_infeasible = q4_recheck.loc[~q4_recheck["raw_5_feasible"], "label"].tolist()
-    extension_2 = q4_screen.loc[np.isclose(q4_screen["voltage_upper_factor"], 1.02)].iloc[0]
-    extension_3 = q4_screen.loc[np.isclose(q4_screen["voltage_upper_factor"], 1.03)].iloc[0]
+    extension_row = q4_screen.loc[
+        np.isclose(q4_screen["voltage_upper_factor"], voltage_upper_factor)
+    ].iloc[0]
+    extension_pct = 100.0 * (voltage_upper_factor - 1.0)
 
     q4_display = q4_recheck[
         [
@@ -437,7 +440,7 @@ def _write_report(
         "5限值功率/kW",
         "增幅/%",
         "历史边界可行",
-        "2%扩展可行",
+        f"{extension_pct:.0f}%扩展可行",
         "一级动作",
         "首选变量",
     ]
@@ -546,17 +549,17 @@ $$
 
 ## 5. 问题四：限值收紧的可行性与电耗增幅
 
-历史边界内不满足 $5\,\mathrm{{mg/Nm^3}}$ 的工况仍为 {"、".join(raw_infeasible)}。按 1% 步长扩展电压上界时，2% 仍是全工况可行的最小比例；其加权功率由 {q4_weighted_10:.2f} kW 增至 {q4_weighted_5:.2f} kW，增幅为 **{weighted_increase:.2f}%**。R8 增幅为 **{r8_increase:.2f}%**，12 组重采样经验范围为 **[{interval[0]:.2f}%, {interval[1]:.2f}%]**。3% 容量裕量情景的加权增幅为 **{float(extension_3['increase_vs_10_pct']):.2f}%**。
+历史边界内不满足 $5\,\mathrm{{mg/Nm^3}}$ 的工况仍为 {"、".join(raw_infeasible)}。条件情景不再搜索临界可行扩展量，而是直接将四场历史电压上界设为原值的 {voltage_upper_factor:.2f} 倍；其加权功率由 {q4_weighted_10:.2f} kW 增至 {q4_weighted_5:.2f} kW，增幅为 **{weighted_increase:.2f}%**。R8 增幅为 **{r8_increase:.2f}%**，12 组重采样经验范围为 **[{interval[0]:.2f}%, {interval[1]:.2f}%]**。该情景下八类工况均满足约束。
 
 {_markdown_table(q4_display, digits=2)}
 
 分层动作解释为：从 $10$ 限值策略向 $5$ 限值策略过渡时，高负荷工况先通过 $T_3/T_4$ 恢复尘负荷安全裕量，再利用扩展后的电压空间降低稳态穿透。该顺序同时解释了 R8 中电压强化与周期缩短共同造成的功率增量。
 
-## 6. 与原结果的关系
+## 6. 数值结论的变化
 
-- 核心排放模型、功率模型和优化约束未改变，因此四问的最优功率、达标率、2% 最小可行扩展及 6.40%/17.42%/5.17% 等数值结论保持不变。
+- 问题一至问题三的核心排放模型、功率模型和 $10\,\mathrm{{mg/Nm^3}}$ 策略不变；问题四的主情景改为电压上界 110%，相应功率、增幅、归因与重采样范围均以该情景重新计算。
 - 改进发生在第三问的“优先”定义：原 $E_j$ 是直接平均减排效率，新模型增加活跃约束层，能够区分低负荷电压优先和高负荷周期优先。
-- 固定种子复算的最大功率误差、P95 误差和达标概率误差均记录在复核表中；本报告没有修改论文正文及 PDF。
+- 固定种子复算的最大功率误差、P95 误差和达标概率误差均记录在复核表中。
 
 ## 7. 结论边界
 
@@ -580,6 +583,9 @@ def main() -> None:
     q4_screen = pd.read_csv(table_dir / "q4_voltage_extension_screen.csv")
     bootstrap = pd.read_csv(table_dir / "q4_high_regime_bootstrap.csv")
     dust_limit = float(config["optimization"]["dust_load_limit"])
+    voltage_upper_factor = float(
+        config["optimization"]["q4_voltage_upper_extension_factor"]
+    )
 
     seeds10 = {
         regime: (seed + 30000 if regime == 1 else seed + 31000 if regime == 7 else seed + 32000 + regime)
@@ -601,7 +607,7 @@ def main() -> None:
         regimes,
         twin,
         power,
-        policy_bounds(audit.frame, voltage_upper_factor=1.02),
+        policy_bounds(audit.frame, voltage_upper_factor=voltage_upper_factor),
         seeds5,
     )
 
@@ -665,7 +671,9 @@ def main() -> None:
     pd.concat(
         [
             revalidation5_raw.assign(scenario="历史边界"),
-            revalidation5.assign(scenario="电压上界扩展2%"),
+            revalidation5.assign(
+                scenario=f"电压上界为历史上界的{100 * voltage_upper_factor:.0f}%"
+            ),
         ],
         ignore_index=True,
     ).to_csv(
@@ -693,6 +701,7 @@ def main() -> None:
         stability=stability,
         q4_screen=q4_screen,
         bootstrap=bootstrap,
+        voltage_upper_factor=voltage_upper_factor,
         path=answer_dir / "分层优先级新模型四问结果.md",
     )
 

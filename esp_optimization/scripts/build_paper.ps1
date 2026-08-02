@@ -1,12 +1,15 @@
 param(
-    [string]$TectonicPath = ""
+    [string]$TectonicPath = "",
+    [string]$OutputName = "Cement_ESP_Optimization_Paper.pdf"
 )
+
+$ErrorActionPreference = "Stop"
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $paperDir = Join-Path $projectRoot "paper"
 $buildDir = Join-Path $projectRoot "build\latex"
 $finalDir = Join-Path $projectRoot "output\pdf"
-$finalPdf = Join-Path $finalDir "Cement_ESP_Optimization_Paper.pdf"
+$finalPdf = Join-Path $finalDir $OutputName
 
 if ([string]::IsNullOrWhiteSpace($TectonicPath)) {
     $command = Get-Command tectonic -ErrorAction SilentlyContinue

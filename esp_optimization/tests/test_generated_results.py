@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 
@@ -21,9 +22,10 @@ def test_policy_feasibility_and_q4_logic():
     assert policy10["feasible"].all()
     assert (~policy5_raw["feasible"]).sum() >= 1
     assert policy5_conditional["feasible"].all()
+    assert np.allclose(policy5_conditional["voltage_upper_factor"], 1.10)
+    assert np.allclose(q4["voltage_upper_factor"], 1.10)
     assert (q4["increase_pct"] > 0).all()
     weighted_10 = (q4["share"] * q4["power_10_kW"]).sum()
     weighted_5 = (q4["share"] * q4["power_5_conditional_kW"]).sum()
     increase = 100 * (weighted_5 - weighted_10) / weighted_10
-    assert 3.0 < increase < 10.0
-
+    assert 4.5 < increase < 6.0

@@ -14,6 +14,7 @@ from .data_audit import load_and_audit_data
 from .emission_twin import fit_emission_twin
 from .optimization import (
     POLICY_COLUMNS,
+    continue_policy_to_factor,
     optimize_policy,
     optimize_single_regime,
     policy_bounds,
@@ -324,7 +325,7 @@ $$"""
 
 ## 5. 问题4：10降至5的电耗代价
 
-在完全相同的历史观测边界内，5 mg/Nm³有 {raw_infeasible} 个工况无法通过独立95%机会约束复核，因此不能为全工况给出虚假的“边界内最优百分比”。按1%整数步长筛查，1%扩展仍有2类不可行，{(voltage_extension-1)*100:.0f}%是首次使全部工况可行的条件仿真；振打周期边界保持不变。3%扩展作为容量裕量敏感性，其加权增幅为5.17%。
+在完全相同的历史观测边界内，5 mg/Nm³有 {raw_infeasible} 个工况无法通过独立95%机会约束复核，因此不能为全工况给出虚假的“边界内最优百分比”。为避免在临界可行边界附近形成高频振打策略，条件情景直接将四场历史电压上界统一设为原值的 {(voltage_extension)*100:.0f}%，振打周期边界保持不变。该上界是待设备校核的宽裕仿真边界，不代表现场额定电压已经提高。
 
 {_markdown_table(q4)}
 
@@ -395,7 +396,7 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
         voltage_upper_factor=voltage_screen,
     )
     voltage_extension = float(optimization_config["q4_voltage_upper_extension_factor"])
-    result5_conditional = optimize_policy(
+    result5_wide = optimize_policy(
         twin,
         power,
         audit.frame,
@@ -404,19 +405,21 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
         optimization_config,
         seed + 900,
         voltage_upper_factor=voltage_extension,
+        initial_policies=result5_screen.policies,
     )
-    voltage_relief = float(optimization_config["q4_voltage_relief_factor"])
-    result5_relief = optimize_policy(
-        twin,
-        power,
-        audit.frame,
-        regimes.labels,
-        5.0,
-        optimization_config,
-        seed + 1100,
-        voltage_upper_factor=voltage_relief,
+    result5_conditional = continue_policy_to_factor(
+        initial_result=result5_screen,
+        twin=twin,
+        power=power,
+        frame=audit.frame,
+        regime_labels=regimes.labels,
+        limit=5.0,
+        optimization_config=optimization_config,
+        start_factor=voltage_screen,
+        target_factor=voltage_extension,
+        seed=seed + 900,
+        comparison_policies=result5_wide.policies,
     )
-
     representative_config = config["representative_regimes"]
     eligible = regimes.centers.loc[
         (
@@ -475,7 +478,6 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
         (1.0, result5_raw),
         (voltage_screen, result5_screen),
         (voltage_extension, result5_conditional),
-        (voltage_relief, result5_relief),
     ]:
         all_feasible = bool(result.table["feasible"].all())
         weighted_power = float(

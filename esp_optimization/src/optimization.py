@@ -192,6 +192,7 @@ def _optimize_one(
     penalty_scale: float,
     seed: int,
     voltage_upper_factor: float,
+    initial_policy: np.ndarray | None = None,
 ) -> tuple[np.ndarray, dict[str, float | bool], EmissionScenarios]:
     bounds = policy_bounds(full_frame, voltage_upper_factor=voltage_upper_factor)
     training = twin.scenario_pack(regime_frame, n_scenarios=n_scenarios, seed=seed)
@@ -228,17 +229,34 @@ def _optimize_one(
         {"type": "ineq", "fun": lambda x: limit - constraints(x)[0]},
         {"type": "ineq", "fun": lambda x: dust_limit - constraints(x)[1]},
     ]
-    local_result = minimize(
-        lambda x: power.predict_policy(x),
-        global_result.x,
-        method="SLSQP",
-        bounds=bounds,
-        constraints=local_constraints,
-        options={"maxiter": 350, "ftol": 1e-8, "disp": False},
-    )
-    candidates = [np.asarray(global_result.x, dtype=float)]
-    if local_result.success:
-        candidates.append(np.asarray(local_result.x, dtype=float))
+    starts = [np.asarray(global_result.x, dtype=float)]
+    if initial_policy is not None:
+        lower = np.asarray([bound[0] for bound in bounds], dtype=float)
+        upper = np.asarray([bound[1] for bound in bounds], dtype=float)
+        warm = np.clip(np.asarray(initial_policy, dtype=float), lower, upper)
+        starts.append(warm)
+        ceiling = warm.copy()
+        ceiling[:4] = upper[:4]
+        starts.extend(
+            np.r_[ceiling[:4], warm[4:] + mix * (upper[4:] - warm[4:])]
+            for mix in (0.0, 0.5, 1.0)
+        )
+
+    candidates: list[np.ndarray] = []
+    local_success = False
+    for start in starts:
+        candidates.append(np.asarray(start, dtype=float))
+        local_result = minimize(
+            lambda x: power.predict_policy(x),
+            start,
+            method="SLSQP",
+            bounds=bounds,
+            constraints=local_constraints,
+            options={"maxiter": 350, "ftol": 1e-8, "disp": False},
+        )
+        local_success = local_success or bool(local_result.success)
+        if local_result.success:
+            candidates.append(np.asarray(local_result.x, dtype=float))
 
     feasible_candidates: list[np.ndarray] = []
     for candidate in candidates:
@@ -307,7 +325,7 @@ def _optimize_one(
             "regime": regime,
             "limit_mgNm3": limit,
             "global_iterations": int(global_result.nit),
-            "local_success": bool(local_result.success),
+            "local_success": local_success,
             "design_confidence": design_confidence,
             "voltage_upper_factor": voltage_upper_factor,
             "verification_repair": verification_repair,
@@ -325,6 +343,7 @@ def optimize_policy(
     optimization_config: dict[str, Any],
     seed: int = 2026,
     voltage_upper_factor: float = 1.0,
+    initial_policies: dict[int, np.ndarray] | None = None,
 ) -> OptimizationResult:
     rows: list[dict[str, float | bool]] = []
     policies: dict[int, np.ndarray] = {}
@@ -350,6 +369,11 @@ def optimize_policy(
             penalty_scale=float(optimization_config["penalty_scale"]),
             seed=seed + 1000 * int(regime) + int(limit * 10),
             voltage_upper_factor=voltage_upper_factor,
+            initial_policy=(
+                initial_policies.get(int(regime))
+                if initial_policies is not None
+                else None
+            ),
         )
         policies[int(regime)] = policy
         scenario_packs[int(regime)] = scenarios
@@ -364,6 +388,185 @@ def optimize_policy(
     return OptimizationResult(
         limit=float(limit),
         table=table,
+        policies=policies,
+        training_scenarios=scenario_packs,
+    )
+
+
+def continue_policy_to_factor(
+    initial_result: OptimizationResult,
+    twin: EmissionTwin,
+    power: PowerSurrogate,
+    frame: pd.DataFrame,
+    regime_labels: np.ndarray,
+    limit: float,
+    optimization_config: dict[str, Any],
+    start_factor: float,
+    target_factor: float,
+    seed: int = 2026,
+    comparison_policies: dict[int, np.ndarray] | None = None,
+    factor_step: float = 0.01,
+) -> OptimizationResult:
+    """Continue a feasible policy through gradually widening voltage bounds.
+
+    A wide box can make one-shot global search less efficient.  This routine
+    follows the feasible branch in one-percentage-point increments and, at the
+    final factor, also refines any independently obtained global candidate.
+    """
+
+    confidence = float(optimization_config["confidence"])
+    design_confidence = min(
+        0.995,
+        confidence + float(optimization_config.get("scenario_quantile_buffer", 0.025)),
+    )
+    n_scenarios = int(optimization_config["training_scenarios"])
+    verification_scenarios = int(optimization_config["verification_scenarios"])
+    dust_limit = float(optimization_config["dust_load_limit"])
+    n_steps = max(1, int(np.ceil((target_factor - start_factor) / factor_step)))
+    factors = np.linspace(start_factor, target_factor, n_steps + 1)[1:]
+
+    rows: list[dict[str, float | bool]] = []
+    policies: dict[int, np.ndarray] = {}
+    scenario_packs: dict[int, EmissionScenarios] = {}
+    for regime in sorted(np.unique(regime_labels)):
+        regime = int(regime)
+        regime_frame = frame.loc[regime_labels == regime].reset_index(drop=True)
+        optimizer_seed = seed + 1000 * regime + int(limit * 10)
+        training = twin.scenario_pack(
+            regime_frame, n_scenarios=n_scenarios, seed=optimizer_seed
+        )
+        policy = np.asarray(initial_result.policies[regime], dtype=float).copy()
+        local_success = False
+
+        for factor in factors:
+            bounds = policy_bounds(frame, voltage_upper_factor=float(factor))
+            lower = np.asarray([bound[0] for bound in bounds], dtype=float)
+            upper = np.asarray([bound[1] for bound in bounds], dtype=float)
+
+            def metrics(candidate: np.ndarray) -> tuple[float, float]:
+                concentration = twin.predict_scenarios(candidate, training)
+                return (
+                    float(np.quantile(concentration, design_confidence)),
+                    float(twin.dust_load_index(candidate, regime_frame)),
+                )
+
+            constraints = [
+                {"type": "ineq", "fun": lambda x: limit - metrics(x)[0]},
+                {"type": "ineq", "fun": lambda x: dust_limit - metrics(x)[1]},
+            ]
+            starts = [np.clip(policy, lower, upper)]
+            ceiling = starts[0].copy()
+            ceiling[:4] = upper[:4]
+            for mix in (0.0, 0.25, 0.5, 0.75, 1.0):
+                candidate = ceiling.copy()
+                candidate[4:] = starts[0][4:] + mix * (upper[4:] - starts[0][4:])
+                starts.append(candidate)
+            if (
+                comparison_policies is not None
+                and np.isclose(float(factor), target_factor)
+            ):
+                starts.append(
+                    np.clip(
+                        np.asarray(comparison_policies[regime], dtype=float), lower, upper
+                    )
+                )
+
+            candidates: list[np.ndarray] = []
+            for start in starts:
+                q_value, dust = metrics(start)
+                if q_value <= limit * 1.0005 and dust <= dust_limit * 1.0005:
+                    candidates.append(start)
+                local = minimize(
+                    lambda x: power.predict_policy(x),
+                    start,
+                    method="SLSQP",
+                    bounds=bounds,
+                    constraints=constraints,
+                    options={"maxiter": 350, "ftol": 1e-8, "disp": False},
+                )
+                local_success = local_success or bool(local.success)
+                q_value, dust = metrics(local.x)
+                if q_value <= limit * 1.0005 and dust <= dust_limit * 1.0005:
+                    candidates.append(np.asarray(local.x, dtype=float))
+            if not candidates:
+                candidates = [starts[0]]
+            policy = min(candidates, key=power.predict_policy)
+
+        final_bounds = policy_bounds(frame, voltage_upper_factor=target_factor)
+        verification = twin.scenario_pack(
+            regime_frame,
+            n_scenarios=verification_scenarios,
+            seed=optimizer_seed + 100000,
+        )
+        summary = _policy_summary(
+            policy,
+            regime_frame,
+            twin,
+            power,
+            verification,
+            limit,
+            confidence,
+            dust_limit,
+        )
+        verification_repair = False
+        if not bool(summary["feasible"]):
+            repair_scenarios = twin.scenario_pack(
+                regime_frame,
+                n_scenarios=verification_scenarios,
+                seed=optimizer_seed + 200000,
+            )
+            policy, verification_repair = _repair_on_independent_scenarios(
+                policy,
+                final_bounds,
+                regime_frame,
+                twin,
+                power,
+                repair_scenarios,
+                limit,
+                design_confidence,
+                dust_limit,
+            )
+            if verification_repair:
+                verification = twin.scenario_pack(
+                    regime_frame,
+                    n_scenarios=verification_scenarios,
+                    seed=optimizer_seed + 300000,
+                )
+                summary = _policy_summary(
+                    policy,
+                    regime_frame,
+                    twin,
+                    power,
+                    verification,
+                    limit,
+                    confidence,
+                    dust_limit,
+                )
+
+        summary.update(
+            {
+                "regime": regime,
+                "limit_mgNm3": float(limit),
+                "global_iterations": 0,
+                "local_success": local_success,
+                "design_confidence": design_confidence,
+                "voltage_upper_factor": target_factor,
+                "verification_repair": verification_repair,
+            }
+        )
+        summary.update({column: float(value) for column, value in zip(POLICY_COLUMNS, policy)})
+        history_power = float(regime_frame["P_total_kW"].mean())
+        summary["history_power_mean_kW"] = history_power
+        summary["saving_vs_history_pct"] = 100.0 * (
+            history_power - float(summary["power_kW"])
+        ) / history_power
+        rows.append(summary)
+        policies[regime] = policy
+        scenario_packs[regime] = training
+
+    return OptimizationResult(
+        limit=float(limit),
+        table=pd.DataFrame(rows).sort_values("regime").reset_index(drop=True),
         policies=policies,
         training_scenarios=scenario_packs,
     )
