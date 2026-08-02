@@ -1,0 +1,81 @@
+\section{数据审计与证据分层}
+
+\subsection{时间连续性、缺失与量程封顶}
+
+原始数据从 2024 年 5 月 1 日 00:00 连续至 5 月 7 日 23:59，共 $7\times24\times60=10,080$ 行，时间步长均为 1 分钟。除出口浓度缺失 50 行外，其余建模变量完整。图\ref{fig:dataaudit} 展示了工况时序、出口读数和经验分布。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.97\textwidth]{fig01_data_audit.png}
+\caption{七天运行数据的时序与出口浓度量程封顶}
+\label{fig:dataaudit}
+\end{figure}
+
+在 10,030 个有效出口读数中，5,491 个恰好等于 $50\mgNm$，比例为 54.47\%。若把这些值当成真实连续测量，任何均方误差模型都会把大量概率质量错误地压到 50；若按比例换算，则改变了原题量纲且缺乏依据。因此定义观测变量
+\begin{equation}
+Y_t=\min(Y_t^*,c),\qquad c=50,
+\label{eq:censorobs}
+\end{equation}
+其中 $Y_t^*$ 为潜在真实出口浓度。缺失值只在出口建模时剔除，不对其做插值，以免虚构排放轨迹。
+
+\begin{table}[H]
+\centering
+\caption{数据审计结果}
+\label{tab:audit}
+\begin{tabularx}{0.92\textwidth}{L C{3.0cm} L}
+\toprule
+审计项 & 结果 & 建模处理\\
+\midrule
+时间长度 & 10,080 min & 保持原始顺序，验证按天分组\\
+时间间隔 & 全部为 1 min & 不补造时间点\\
+出口缺失 & 50 行 & 不插补，仅在排放似然中剔除\\
+出口封顶 & 5,491 行，占 54.47\% & 按 $Y^*\ge50$ 的右删失事件处理\\
+原始出口普通 OLS & $R^2=0.000815$ & 不用于因果解释或限值外推\\
+封顶事件线性模型 & $R^2=0.001162$ & 条件依赖不可识别\\
+功率代理全样本 & $R^2=0.9979$ & 可用于历史边界附近的优化\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{删失正态运行点估计}
+
+为估计量程附近的潜在中心和噪声，令 $Y_t^*\sim\mathcal N(\mu_c,\sigma_c^2)$。记未删失集合为 $\mathcal U$、封顶集合为 $\mathcal C$，删失对数似然为
+\begin{equation}
+\ell(\mu_c,\sigma_c)=
+\sum_{t\in\mathcal U}\left[-\log\sigma_c+\log\phi\!\left(\frac{Y_t-\mu_c}{\sigma_c}\right)\right]
++\sum_{t\in\mathcal C}\log\!\left[1-\Phi\!\left(\frac{c-\mu_c}{\sigma_c}\right)\right].
+\label{eq:censorll}
+\end{equation}
+极大似然估计为 $\hat\mu_c=50.036\mgNm$、$\hat\sigma_c=0.313\mgNm$。该结果只锚定当前闭环运行点，不足以辨识电压、温度或振打周期的净效应。图\ref{fig:censordiag} 中相关系数接近零，亦支持这一判断。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.91\textwidth]{fig02_censor_diagnostics.png}
+\caption{出口浓度相关性与右删失运行点估计}
+\label{fig:censordiag}
+\end{figure}
+
+\subsection{闭环偏差与证据等级}
+
+生产控制器会在高入口负荷时主动提高电压或改变振打周期，导致“高电压与高出口浓度同时出现”的表观相关。此类闭环偏差意味着相关关系不能直接解释为控制量导致排放上升。更关键的是，54.47\% 的封顶使输出变化严重压缩。故本文采用表\ref{tab:evidence} 的证据分层：数据用于确定运行点、能耗和工况分布；机理参数用于限值外推，并对其作显式敏感性分析。
+
+\begin{table}[H]
+\centering
+\caption{排放模型参数的证据等级}
+\label{tab:evidence}
+\begin{tabularx}{0.96\textwidth}{L C{2.6cm} C{3.8cm} C{2.2cm}}
+\toprule
+对象 & 证据来源 & 诊断量 & 结论\\
+\midrule
+右删失位置与噪声 & 附件数据 & $n=10,030$，删失率 54.474\% & 可识别\\
+工况/操作量对出口的净效应 & 附件数据 & 普通 OLS $R^2=0.000815$ & 不可识别\\
+删失事件的条件依赖 & 附件数据 & 线性模型 $R^2=0.001162$ & 不可识别\\
+基准等效去除指数 & 删失锚定+质量守恒 & $D_0=6.6846$ & 弱识别\\
+分场权重、温度、积灰与再飞扬 & 公开机理研究 & 基准情景传播，另作 $\pm30\%$ 压力测试 & 先验主导\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{warnbox}
+\textbf{外推边界：} 附件的有效出口数据集中在 $50\mgNm$ 附近，而题目要求 $10\mgNm$ 与 $5\mgNm$，二者都在直接观测范围之外。因此后续浓度数值必须理解为“删失锚定+物理先验”的风险情景结果，而不是附件对低浓度区间的经验验证。
+\end{warnbox}

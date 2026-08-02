@@ -1,0 +1,141 @@
+\section{问题二：典型工况与最低电耗策略}
+
+\subsection{工况数选择与时序分割结果}
+
+表\ref{tab:kselect} 显示 $K=3$--8 的选择结果。所有候选均满足占比与驻留约束，BIC 随 $K$ 增加而下降，并在候选上限 $K=8$ 处达到最小。$K=8$ 还保留了 120 分钟、均温 $154.8^\circ\mathrm C$ 的高温短状态 R1；若强制更少状态，该异常段会与常温低负荷状态混合，削弱安全解释。因此选择 8 类工况。
+
+\begin{table}[H]
+\centering
+\caption{工况数选择结果}
+\label{tab:kselect}
+\begin{tabular}{cccccc}
+\toprule
+$K$ & BIC & 轮廓系数 & 最小占比/\% & 最短中位驻留/min & 状态转移数\\
+\midrule
+3 & 38,051.7 & 0.313 & 17.80 & 897.0 & 11\\
+4 & 32,485.8 & 0.295 & 17.88 & 901.0 & 10\\
+5 & 22,291.3 & 0.229 & 1.19 & 46.0 & 15\\
+6 & 15,981.6 & 0.295 & 4.02 & 120.0 & 15\\
+7 & 11,952.2 & 0.323 & 3.55 & 69.5 & 19\\
+\textbf{8} & \textbf{7,687.0} & \textbf{0.324} & \textbf{1.19} & \textbf{120.0} & \textbf{15}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+图\ref{fig:regimes} 的二维投影和时间轴显示，时间正则化后的标签在分钟尺度上稳定，状态切换与入口条件的分段变化一致。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.97\textwidth]{fig04_regime_segmentation.png}
+\caption{时间正则化 GMM 的工况投影与时序分割}
+\label{fig:regimes}
+\end{figure}
+
+8 类工况中心见表\ref{tab:centers}。编号按入口质量负荷从低到高排列，R2 和 R8 分别作为后续低、高负荷代表；R1 虽负荷最低，却是独立的高温异常状态。
+
+\begin{table}[H]
+\centering
+\caption{典型工况中心及驻留特征}
+\label{tab:centers}
+\small
+\begin{tabular}{cccccccc}
+\toprule
+工况 & 样本数 & 占比/\% & 温度/$^\circ$C & $C_{\rm in}$/$\gNm$ & $Q$/$10^3\NmH$ & 质量负荷/$10^6$ & 驻留/min\\
+\midrule
+R1 & 120  & 1.19 & 154.8 & 25.950 & 432.1 & 11.214 & 120\\
+R2 & 1704 & 16.90 & 120.9 & 25.843 & 477.1 & 12.321 & 852\\
+R3 & 1578 & 15.65 & 132.0 & 27.449 & 463.8 & 12.819 & 1578\\
+R4 & 1615 & 16.02 & 125.7 & 33.401 & 455.2 & 15.303 & 209\\
+R5 & 1274 & 12.64 & 132.2 & 42.181 & 451.0 & 19.097 & 1274\\
+R6 & 1716 & 17.02 & 121.1 & 44.522 & 442.5 & 19.680 & 120\\
+R7 & 1203 & 11.93 & 129.1 & 42.384 & 482.9 & 20.483 & 255\\
+R8 & 870  & 8.63 & 118.1 & 46.090 & 480.9 & 22.166 & 870\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{fig05_regime_centers.png}
+\caption{八类工况中心的稳健标准化对比}
+\label{fig:centerheat}
+\end{figure}
+
+\subsection{能耗模型拟合与时序验证}
+
+式\eqref{eq:power} 的截距为 $73.7805\kW$，电压平方项系数在 0.0844--0.0853 之间，振打频率项系数在 $5.335\times10^4$--$5.471\times10^4$ 之间，见表\ref{tab:powercoef}。接近的分场系数与四套相似整流变压器/振打机构相符。
+
+\begin{table}[H]
+\centering
+\caption{能耗代理模型系数}
+\label{tab:powercoef}
+\begin{tabular}{ccccccccc}
+\toprule
+项 & $U_1^2$ & $U_2^2$ & $U_3^2$ & $U_4^2$ & $1/T_1$ & $1/T_2$ & $1/T_3$ & $1/T_4$\\
+\midrule
+系数 & 0.08494 & 0.08526 & 0.08443 & 0.08523 & 53,736 & 53,852 & 54,712 & 53,353\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+全样本 $R^2=0.9979$。逐日留一的 $R^2$ 为 0.9760--0.9930，平均 0.9866；平均 MAE 为 $4.77\kW$、RMSE 为 $5.96\kW$，只占平均功率约 0.34\%。这里不把逐日 $R^2$ 宣称为超过 0.99，而以绝对误差与时序外推能力评价其优化适用性。图\ref{fig:powerfit} 显示预测点贴近对角线，残差没有随预测功率显著扩张。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.94\textwidth]{fig03_power_model.png}
+\caption{能耗代理模型拟合、残差与逐日留一验证}
+\label{fig:powerfit}
+\end{figure}
+
+\subsection{\texorpdfstring{$10\mgNm$}{10 mg/Nm3} 下的最低电耗组合}
+
+表\ref{tab:policyu10} 与表\ref{tab:policyt10} 分别给出四场电压和振打周期。所有结果均位于历史边界内，并通过独立 10,000 情景的 95\% 机会约束复核。
+
+\begin{table}[H]
+\centering
+\caption{$10\mgNm$ 限值下的最优电压与电耗}
+\label{tab:policyu10}
+\begin{tabular}{ccccccc}
+\toprule
+工况 & $U_1$/kV & $U_2$/kV & $U_3$/kV & $U_4$/kV & 电耗/kW\\
+\midrule
+R1 & 69.340 & 70.242 & 59.200 & 55.937 & 2049.8\\
+R2 & 70.900 & 68.147 & 59.200 & 44.743 & 1947.6\\
+R3 & 70.900 & 69.322 & 59.200 & 48.315 & 1989.7\\
+R4 & 70.900 & 70.155 & 59.200 & 47.811 & 2002.1\\
+R5 & 70.900 & 70.864 & 58.783 & 48.414 & 2073.3\\
+R6 & 70.070 & 69.473 & 58.264 & 41.747 & 1998.8\\
+R7 & 70.900 & 67.700 & 59.200 & 55.296 & 2110.9\\
+R8 & 70.900 & 70.447 & 59.200 & 53.314 & 2138.2\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{$10\mgNm$ 限值下的最优振打周期与风险复核}
+\label{tab:policyt10}
+\begin{tabular}{cccccccc}
+\toprule
+工况 & $T_1$/s & $T_2$/s & $T_3$/s & $T_4$/s & $q_{0.95}(C)$ & 达标概率/\% & 尘负荷指数\\
+\midrule
+R1 & 290.0 & 289.0 & 506.0 & 510.0 & 9.182 & 97.02 & 0.903\\
+R2 & 290.0 & 289.0 & 506.0 & 510.0 & 9.052 & 97.49 & 1.098\\
+R3 & 290.0 & 289.0 & 506.0 & 510.0 & 9.056 & 97.28 & 1.257\\
+R4 & 280.8 & 289.0 & 503.8 & 510.0 & 8.840 & 97.11 & 1.450\\
+R5 & 253.1 & 263.3 & 439.8 & 478.0 & 9.093 & 97.38 & 1.450\\
+R6 & 251.0 & 261.4 & 426.2 & 472.6 & 9.796 & 95.63 & 1.450\\
+R7 & 247.6 & 261.5 & 429.7 & 473.9 & 9.400 & 96.86 & 1.450\\
+R8 & 245.4 & 256.3 & 414.4 & 463.8 & 9.209 & 97.66 & 1.450\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig09_policy_10_heatmap.png}
+\caption{$10\mgNm$ 下八类工况的最优参数热图}
+\label{fig:policyheat}
+\end{figure}
+
+低负荷工况允许较长振打周期，而 R4--R8 的尘负荷指数达到上限 1.45，振打约束成为活跃约束。R6 的达标概率最低但仍为 95.63\%，说明它位于排放约束边界附近；实际部署时应为仪表漂移和设备老化保留额外工程裕量。需要注意，R1--R8 的“相对历史节能率”中存在负值，这是因为附件的历史出口浓度约在 $50\mgNm$ 附近，不能把历史低功率点与 $10\mgNm$ 的严格外推策略作同等达标比较；本文因此不把这些负值解释为优化失效。

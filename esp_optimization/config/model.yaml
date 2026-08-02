@@ -1,0 +1,44 @@
+project:
+  seed: 2026
+  input_csv: ../Cement_ESP_Data.csv
+  output_dir: outputs
+
+data:
+  censor_threshold_mgNm3: 50.0
+  target_limits_mgNm3: [10.0, 5.0]
+  rolling_window_minutes: 15
+
+regimes:
+  k_min: 3
+  k_max: 8
+  switch_penalty: 8.0
+  minimum_share: 0.01
+  minimum_median_dwell_minutes: 15
+  bic_tie_tolerance: 10.0
+
+emission_prior:
+  stage_weights: [0.32, 0.28, 0.23, 0.17]
+  stage_weight_concentration: 120.0
+  temperature_optimum_C: 125.0
+  temperature_sensitivity: 0.12
+  temperature_scale_C: 25.0
+  plate_penalty: 0.18
+  rapping_amplitude: 0.055
+  rapping_frequency_penalty: 0.015
+  # Chance-constraint uncertainty uses the calibrated posterior spread.
+  # The wider +/-30% epistemic stress test is run separately.
+  log_residual_sigma: 0.01
+  removal_scale_relative_sd: 0.02
+  prior_relative_sd: 0.10
+
+optimization:
+  confidence: 0.95
+  scenario_quantile_buffer: 0.025
+  training_scenarios: 768
+  verification_scenarios: 10000
+  differential_evolution_maxiter: 90
+  differential_evolution_popsize: 9
+  dust_load_limit: 1.45
+  penalty_scale: 1000000.0
+  policy_stability_seeds: [2026, 2027, 2028]
+  q4_voltage_upper_extension_factor: 1.03

@@ -1,0 +1,124 @@
+\documentclass[UTF8,a4paper,zihao=5]{ctexart}
+
+\usepackage[left=2.15cm,right=2.15cm,top=2.25cm,bottom=2.20cm,headheight=15pt]{geometry}
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{booktabs,tabularx,longtable,array,multirow}
+\usepackage{graphicx,float,caption,subcaption,placeins}
+\usepackage{xcolor,tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,backgrounds}
+\usepackage{enumitem}
+\usepackage{fancyhdr,lastpage}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{tcolorbox}
+\usepackage{url}
+\usepackage[hidelinks,bookmarksnumbered=true,unicode=true]{hyperref}
+
+\definecolor{espblue}{HTML}{174A7E}
+\definecolor{esplight}{HTML}{EAF2F8}
+\definecolor{espteal}{HTML}{167D7F}
+\definecolor{espgray}{HTML}{5E6A71}
+\definecolor{espred}{HTML}{B43B36}
+
+\graphicspath{{../outputs/figures/}}
+\captionsetup{font=small,labelfont=bf,labelsep=quad}
+\captionsetup[table]{position=top,skip=5pt}
+\captionsetup[figure]{position=bottom,skip=5pt}
+\setlength{\abovecaptionskip}{6pt}
+\setlength{\belowcaptionskip}{4pt}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0pt}
+\setlength{\emergencystretch}{2em}
+\setlength{\floatsep}{10pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{12pt plus 2pt minus 3pt}
+\renewcommand{\arraystretch}{1.18}
+\setlist[itemize]{leftmargin=2.2em,itemsep=1pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=2.2em,itemsep=1pt,topsep=3pt}
+
+\ctexset{
+  section={format=\Large\bfseries\color{espblue},beforeskip=1.1ex,afterskip=0.8ex},
+  subsection={format=\large\bfseries\color{espteal},beforeskip=0.9ex,afterskip=0.5ex},
+  subsubsection={format=\normalsize\bfseries\color{espgray},beforeskip=0.7ex,afterskip=0.35ex}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small 水泥电除尘器协同优化控制}
+\fancyhead[R]{\small 物理信息数字孪生与机会约束优化}
+\fancyfoot[C]{\small 第\thepage 页}
+\renewcommand{\headrulewidth}{0.45pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcommand{\mgNm}{\,\mathrm{mg/Nm^3}}
+\newcommand{\gNm}{\,\mathrm{g/Nm^3}}
+\newcommand{\NmH}{\,\mathrm{Nm^3/h}}
+\newcommand{\kV}{\,\mathrm{kV}}
+\newcommand{\kW}{\,\mathrm{kW}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Prob}{\mathbb{P}}
+
+\newtcolorbox{keybox}[1][]{
+  colback=esplight,colframe=espblue,boxrule=0.7pt,arc=1.2mm,
+  left=2mm,right=2mm,top=1.2mm,bottom=1.2mm,#1
+}
+\newtcolorbox{warnbox}[1][]{
+  colback=red!3,colframe=espred,boxrule=0.7pt,arc=1.2mm,
+  left=2mm,right=2mm,top=1.2mm,bottom=1.2mm,#1
+}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.4cm}
+  {\Large\bfseries 2026 年数学建模竞赛论文\par}
+  \vspace{1.0cm}
+  {\color{espblue}\rule{0.86\textwidth}{1.2pt}}\par
+  \vspace{1.2cm}
+  {\fontsize{25pt}{34pt}\selectfont\bfseries
+  右删失信息下水泥电除尘器的\\[0.25em]
+  物理信息数字孪生与协同优化\par}
+  \vspace{0.75cm}
+  {\large ——面向动态工况、振打再飞扬与严格排放限值的风险控制\par}
+  \vspace{1.2cm}
+  {\color{espblue}\rule{0.86\textwidth}{1.2pt}}\par
+  \vfill
+  \begin{tabular}{rl}
+    题目编号：& A 题\\[0.8em]
+    参赛队号：& \underline{\hspace{7cm}}\\[0.8em]
+    队员姓名：& \underline{\hspace{7cm}}\\[0.8em]
+    所在学校：& \underline{\hspace{7cm}}
+  \end{tabular}
+  \vfill
+  {\large \today\par}
+\end{titlepage}
+
+\pagenumbering{Roman}
+\input{sections/00_abstract}
+\clearpage
+{\footnotesize\setstretch{0.92}\tableofcontents}
+\clearpage
+
+\pagenumbering{arabic}
+\input{sections/01_problem}
+\input{sections/02_data}
+\input{sections/03_model}
+\input{sections/04_question1}
+\input{sections/05_question2}
+\input{sections/06_question3}
+\input{sections/07_question4}
+\input{sections/08_validation}
+\input{sections/09_conclusion}
+
+\clearpage
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\clearpage
+\appendix
+\input{sections/10_appendix}
+
+\end{document}

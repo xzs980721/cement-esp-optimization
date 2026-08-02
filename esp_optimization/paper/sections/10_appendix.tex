@@ -1,0 +1,107 @@
+\section{完整参数与复现说明}
+
+\subsection{条件 \texorpdfstring{$5\mgNm$}{5 mg/Nm3} 的完整参数表}
+
+表\ref{tab:a5u}--\ref{tab:a5t} 是问题四 3\% 电压上界扩展情景的完整策略，用于复核计算，不应未经设备校核直接下发。
+
+\begin{table}[H]
+\centering
+\caption{条件 $5\mgNm$ 情景的最优电压}
+\label{tab:a5u}
+\begin{tabular}{ccccccc}
+\toprule
+工况 & $U_1$/kV & $U_2$/kV & $U_3$/kV & $U_4$/kV & 电耗/kW\\
+\midrule
+R1 & 73.019 & 71.479 & 60.976 & 59.946 & 2166.8\\
+R2 & 73.027 & 65.465 & 60.976 & 56.912 & 2066.5\\
+R3 & 72.501 & 72.111 & 60.976 & 52.852 & 2100.0\\
+R4 & 73.027 & 71.178 & 60.976 & 54.576 & 2117.2\\
+R5 & 72.157 & 73.542 & 60.976 & 54.552 & 2197.6\\
+R6 & 72.728 & 68.981 & 60.491 & 48.936 & 2103.2\\
+R7 & 73.027 & 70.832 & 60.976 & 59.105 & 2229.0\\
+R8 & 73.027 & 72.708 & 60.976 & 57.682 & 2251.2\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{条件 $5\mgNm$ 情景的振打周期与风险复核}
+\label{tab:a5t}
+\begin{tabular}{cccccccc}
+\toprule
+工况 & $T_1$/s & $T_2$/s & $T_3$/s & $T_4$/s & $q_{.95}(C)$ & 达标概率/\% & $I_M$\\
+\midrule
+R1 & 290.0 & 289.0 & 506.0 & 510.0 & 4.717 & 96.47 & 0.903\\
+R2 & 290.0 & 289.0 & 506.0 & 510.0 & 4.481 & 97.77 & 1.098\\
+R3 & 290.0 & 289.0 & 506.0 & 510.0 & 4.579 & 97.04 & 1.257\\
+R4 & 283.3 & 289.0 & 496.9 & 510.0 & 4.402 & 97.46 & 1.450\\
+R5 & 254.1 & 262.7 & 438.5 & 478.0 & 4.241 & 98.21 & 1.450\\
+R6 & 250.8 & 261.4 & 426.8 & 472.4 & 4.756 & 96.23 & 1.450\\
+R7 & 250.3 & 260.0 & 428.1 & 471.3 & 4.661 & 97.02 & 1.450\\
+R8 & 244.8 & 256.0 & 416.4 & 464.3 & 4.671 & 97.02 & 1.450\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{模型参考点与不确定性设置}
+
+\begin{table}[H]
+\centering
+\caption{排放数字孪生的主要参考量}
+\label{tab:priors}
+\begin{tabularx}{0.94\textwidth}{C{3.4cm}C{4.0cm}L}
+\toprule
+参数 & 取值 & 说明\\
+\midrule
+$\Theta_0$ & $126.5^\circ\mathrm C$ & 数据中位参考温度\\
+$C_{\mathrm{in},0}$ & $37.41\gNm$ & 数据中位入口浓度\\
+$Q_0$ & $465,546.5\NmH$ & 数据中位流量\\
+$\bm U_0$ & $(58.8,58.9,48.4,48.4)$ kV & 四场中位电压\\
+$\bm T_0$ & $(233,233,445,445)$ s & 四场中位振打周期\\
+$D_0$ & 6.6846 & 右删失运行点+质量守恒锚定\\
+$\bm w_0$ & $(0.32,0.28,0.23,0.17)$ & 文献先验分场贡献\\
+基础情景扰动 & 形状参数 10\%，$D_0$ 2\% & 用于机会约束的校准后验宽度\\
+压力测试 & 关键系数单独 $\pm30\%$ & 用于检验先验失配风险\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{一键复现流程}
+
+项目所有新增文件位于 \texttt{esp\_optimization/}，不移动、不修改原题和原 CSV。目录职责如下：
+
+\begin{verbatim}
+esp_optimization/
+|-- config/model.yaml          # 种子、边界、先验和风险水平
+|-- src/                       # 审计、工况、排放、能耗、优化
+|-- scripts/run_all.py         # 一键生成四问结果
+|-- outputs/
+|   |-- figures/               # 论文图
+|   |-- tables/                # 数值结果 CSV
+|   |-- models/                # 模型摘要
+|   `-- logs/                  # 审计日志
+|-- answers/逐问解答.md        # 第一阶段完整解答
+|-- paper/                     # LaTeX 正文与参考文献
+|-- build/latex/               # 编译辅助文件
+|-- output/pdf/                # 最终 PDF
+`-- tests/                     # 自动验证
+\end{verbatim}
+
+在项目根目录安装 \texttt{requirements.txt} 后，运行
+\begin{verbatim}
+python scripts/run_all.py --config config/model.yaml
+pytest -q
+\end{verbatim}
+即可重新生成 18 张结果表、11 张图、模型摘要和逐问解答。随机种子、训练情景数和独立验证情景数均记录于配置文件，保证结果可追溯。
+
+\subsection{现场部署检查表}
+
+\begin{enumerate}
+  \item 更换或并联低量程出口粉尘仪，确认 $10\mgNm$ 附近不再封顶；
+  \item 接入四场二次电流、火花率、实际振打时刻和灰斗料位；
+  \item 完成小幅单变量阶跃，重新标定 $D_0$ 和分场权重；
+  \item 离线影子运行不少于一周，检查 95\% 覆盖率、切换频率和峰值叠加；
+  \item 核验电压、电流、绝缘与输灰能力后，才可启用 $5\mgNm$ 条件策略；
+  \item 保留历史安全策略作为通信故障、仪表漂移和模型异常时的自动回退。
+\end{enumerate}

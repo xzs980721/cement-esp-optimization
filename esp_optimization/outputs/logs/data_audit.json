@@ -1,0 +1,21 @@
+{
+  "rows": 10080,
+  "columns": 14,
+  "start": "2024-05-01 00:00:00",
+  "end": "2024-05-07 23:59:00",
+  "complete_minute_grid": true,
+  "output_missing": 50,
+  "output_censored": 5491,
+  "output_censored_fraction": 0.5447420634920634,
+  "output_min": 48.74,
+  "output_max": 50.0,
+  "ordinary_ols_r2": 0.0008149708998228533,
+  "censor_indicator_linear_r2": 0.001161978470670788,
+  "censored_normal": {
+    "mu": 50.036221340572425,
+    "sigma": 0.3130510874933127,
+    "expected_latent_if_censored": 50.2634068486366,
+    "log_likelihood": -4721.783331847932,
+    "converged": true
+  }
+}

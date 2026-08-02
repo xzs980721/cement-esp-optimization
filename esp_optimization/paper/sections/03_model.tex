@@ -1,0 +1,139 @@
+\section{模型建立}
+
+\subsection{右删失物理信息排放数字孪生}
+
+\subsubsection{Deutsch--Anderson 穿透骨架}
+
+经典 Deutsch--Anderson 模型以指数形式描述电除尘器穿透率\cite{nichols1972epa,white1963esp}。对四电场设备，定义无振打基线浓度
+\begin{equation}
+C_{\mathrm{base},t}=1000C_{\mathrm{in},t}\exp(-D_t),
+\label{eq:basec}
+\end{equation}
+其中 $1000$ 用于将 $\gNm$ 转为 $\mgNm$，等效去除指数写为
+\begin{equation}
+D_t=D_{0,t}\frac{Q_0}{Q_t}\,g_\Theta(\Theta_t)\,
+\underbrace{\sum_{i=1}^{4}w_{i,t}\left(\frac{U_{i,t}}{U_{i,0}}\right)^2}_{S_U(\bm U_t)}
+\,g_M(\bm T_t,L_t).
+\label{eq:dindex}
+\end{equation}
+式中 $\sum_iw_{i,t}=1$，$Q_0,U_{i,0}$ 为数据中位参考点。$Q_0/Q_t$ 对应停留时间；$U_i^2$ 对应迁移驱动力及电场能耗的低阶近似。分场先验均值取
+\begin{equation}
+\bm w_0=(0.32,0.28,0.23,0.17),
+\label{eq:weights}
+\end{equation}
+并用 Dirichlet 分布传播权重不确定性。该递减结构反映前级承担粗颗粒主捕集、末级承担精细捕集的工程特征，但不声称由附件单独估计。
+
+由删失运行点 $\hat\mu_c$ 和参考入口浓度 $C_{\mathrm{in},0}=37.41\gNm$ 锚定
+\begin{equation}
+D_0=\log\left(\frac{1000C_{\mathrm{in},0}R_0}{\hat\mu_c}\right)=6.6846,
+\label{eq:dref}
+\end{equation}
+其中 $R_0$ 为参考振打增益。这里 $D_0$ 是附件能提供的最主要排放尺度信息，形状参数仍由文献先验控制。
+
+\subsubsection{温度、积灰与振打修正}
+
+高温会改变烟气密度、离子迁移及粉尘比电阻，实验研究表明温度影响具有明显非线性\cite{xu2015hightemp}。本文采用以 $125^\circ\mathrm C$ 为中心的钟形修正
+\begin{equation}
+g_\Theta(\Theta)=\exp\left[-\kappa_\Theta
+\left(\frac{\Theta-125}{s_\Theta}\right)^2\right],
+\qquad s_\Theta=40^\circ\mathrm C.
+\label{eq:tempfactor}
+\end{equation}
+它不将 125$^\circ$C 解释为普适最优温度，而是用于描述本工况区间内偏离参考温区后的有效迁移能力折减。
+
+入口粉尘质量负荷的相对值为
+\begin{equation}
+L_t=\frac{C_{\mathrm{in},t}Q_t}{C_{\mathrm{in},0}Q_0}.
+\label{eq:loadratio}
+\end{equation}
+若实际振打时刻可得，极板尘负荷可由隐状态方程表示：
+\begin{equation}
+M_{i,t+1}=(1-\rho_i I_{i,t}^{\mathrm{rap}})M_{i,t}
++\eta_i L_t\bigl(1-\exp(-D_{i,t})\bigr)\Delta t,
+\label{eq:duststate}
+\end{equation}
+其中 $I_{i,t}^{\mathrm{rap}}$ 是振打触发指示量，$\rho_i$ 是清灰比例。附件只给定周期设定值而没有实际触发相位，故无法逐分钟恢复 $M_{i,t}$。对未知相位积分后，以稳态尘负荷指标代替：
+\begin{align}
+I_M(\bm T,L)&=q_{0.95}(L)\sum_{i=1}^{4}w_i\frac{T_i}{T_{i,0}},\label{eq:dustindex}\\
+g_M(\bm T,L)&=\exp\left[-\kappa_M L
+\sum_{i=1}^{4}w_i\left(\max\left\{\frac{T_i}{T_{i,0}}-1,0\right\}\right)^2\right].\label{eq:platefactor}
+\end{align}
+模型用 $I_M\le1.45$ 防止通过无限延长周期虚假节能。
+
+振打使一部分尘饼落入灰斗，同时会造成短时再飞扬\cite{bush1984rapping,neundorfer1981rapping}。其相位积分后的浓度放大因子为
+\begin{equation}
+R_{\mathrm{rap}}=1+aL\sum_{i=1}^{4}w_i
+\left(\frac{T_i}{T_{i,0}}\right)^{1.20}
++b\sum_{i=1}^{4}w_i
+\left(\frac{T_i}{T_{i,0}}\right)^{-0.50}.
+\label{eq:rapfactor}
+\end{equation}
+第一项表示周期越长，单次积灰量和再飞扬幅度越大；第二项表示周期过短会增加脉冲出现频率。最终情景浓度为
+\begin{equation}
+C_{\mathrm{out}}=1000C_{\mathrm{in}}\exp(-D)R_{\mathrm{rap}}\exp(\varepsilon),
+\qquad \varepsilon\sim\mathcal N(0,\sigma_\varepsilon^2).
+\label{eq:fulltwin}
+\end{equation}
+
+\subsubsection{不确定性传播}
+
+对每个工况，从该工况的分钟样本有放回抽取 $(\Theta,C_{\mathrm{in}},Q)$；$D_0$ 采用截断正态扰动，$\bm w$ 采用 Dirichlet 扰动，其余正参数采用对数正态扰动。机会约束的基准情景采用校准后的后验宽度：$D_0$ 相对标准差 2\%，形状参数相对标准差 10\%，对数残差标准差 0.01；另将关键机理系数单独扰动 $\pm30\%$ 作认知不确定性压力测试。于是同一控制策略 $\bm x=(U_1,\ldots,U_4,T_1,\ldots,T_4)$ 对应浓度分布而非单一点预测。
+
+\subsection{时间正则化典型工况划分}
+
+对原始分钟数据保留完整时间顺序。首先以 15 分钟居中中位数平滑温度、入口浓度和流量，构造
+\begin{equation}
+\bm z_t=\left(\Theta_t,\log C_{\mathrm{in},t},\log Q_t\right)^\top.
+\end{equation}
+再用各维中位数与四分位距进行稳健标准化，以降低高温异常对尺度的影响。候选状态数 $K=3,\ldots,8$，每个候选拟合全协方差高斯混合模型
+\begin{equation}
+p(\bm z_t)=\sum_{k=1}^{K}\pi_k\mathcal N(\bm z_t\mid\bm\mu_k,\bm\Sigma_k).
+\label{eq:gmm}
+\end{equation}
+
+为抑制分钟级标签跳变，定义发射代价 $d_{tk}=-\log p(k\mid\bm z_t)$，用动态规划求解
+\begin{equation}
+\min_{s_1,\ldots,s_n}\left[\sum_{t=1}^{n}d_{t,s_t}
++\lambda\sum_{t=2}^{n}\mathbb I(s_t\ne s_{t-1})\right],
+\qquad \lambda=8.
+\label{eq:viterbi}
+\end{equation}
+驻留不足 15 分钟的短段合并至相邻低代价状态。有效模型需满足每个状态占比至少 1\%、中位驻留至少 15 分钟；在此基础上选择 BIC 最小者，若 BIC 差不超过 10，则取状态数较小者。
+
+\subsection{能耗代理模型}
+
+电场电耗在工作区间内与电压平方近似相关；振打机构的平均功耗与动作频率 $1/T_i$ 相关，多电场节能控制研究也支持按场分配能量的思路\cite{li2013ga}。建立
+\begin{equation}
+P(\bm x)=\beta_0+\sum_{i=1}^{4}\beta_iU_i^2
++\sum_{i=1}^{4}\gamma_i\frac{1}{T_i}+\epsilon_P.
+\label{eq:power}
+\end{equation}
+采用稳健回归减弱偶发功率扰动影响，并以逐日留一交叉验证代替随机分钟切分，避免相邻时间点同时进入训练与测试造成泄漏。模型只在历史操作包络及问题 4 的 3\% 局部扩展中使用。
+
+\subsection{95\%机会约束协同优化}
+
+对工况 $r$ 和限值 $L\in\{10,5\}$，优化问题为
+\begin{align}
+\min_{\bm x_r}\quad & P(\bm x_r),\label{eq:obj}\\
+\text{s.t.}\quad & \Prob\left(C_{\mathrm{out}}(\bm x_r,\bm\xi_r)\le L\right)\ge0.95,\label{eq:chance}\\
+& I_M(\bm x_r)\le1.45,\label{eq:dustconstraint}\\
+& \bm x_{\min}\le\bm x_r\le\bm x_{\max},\label{eq:bounds}
+\end{align}
+其中 $\bm\xi_r$ 包含工况波动、机理参数和残差不确定性。训练时采用 97.5\% 设计分位预留有限样本裕量；用差分进化执行全局搜索，再用 SLSQP 局部精修。罚函数写为
+\begin{equation}
+J(\bm x)=P(\bm x)+\Lambda\left[
+\max\left(\frac{q_{0.975}(C)}{L}-1,0\right)^2
++\max\left(\frac{I_M}{1.45}-1,0\right)^2\right].
+\label{eq:penalty}
+\end{equation}
+最终策略用另一随机种子生成的 10,000 个独立情景检查 $q_{0.95}(C)\le L$。算法固定基础种子为 2026，以确保可复现。
+
+\subsection{调节优先级指标}
+
+在最优策略附近，对每个可调量作 1\% 单变量反事实扰动，定义单位新增电耗的 95\% 分位减排收益
+\begin{equation}
+E_j=\frac{q_{0.95}(C\mid\bm x^*)-q_{0.95}(C\mid\bm x^*+\Delta x_j\bm e_j)}
+{P(\bm x^*+\Delta x_j\bm e_j)-P(\bm x^*)}.
+\label{eq:priority}
+\end{equation}
+若变量已在上界，则使用反向差分并统一换算为正向收益。$E_j$ 越大，说明单位电耗带来的风险分位下降越多；但若尘负荷约束活跃，振打周期具备更高的安全优先级，即使其直接 $E_j$ 较小。

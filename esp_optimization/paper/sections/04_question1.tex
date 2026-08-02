@@ -1,0 +1,50 @@
+\section{问题一：因素关系与振打峰值}
+
+\subsection{入口条件与操作参数的作用关系}
+
+在参考工况附近分别改变单一变量，得到图\ref{fig:effects}。这些曲线反映式\eqref{eq:fulltwin} 的物理响应，而不是附件直接回归系数。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.94\textwidth]{fig06_effect_curves.png}
+\caption{入口浓度、流量、电压和温度的单因素响应曲线}
+\label{fig:effects}
+\end{figure}
+
+从式\eqref{eq:fulltwin} 可得以下关系。
+
+\begin{enumerate}
+  \item \textbf{入口浓度。} 在去除指数不变时，$C_{\mathrm{out}}$ 与 $C_{\mathrm{in}}$ 近似成正比；同时更高的 $C_{\mathrm{in}}Q$ 增大极板负荷和振打再飞扬，因此实际响应略高于线性。
+  \item \textbf{烟气流量。} $Q$ 增大缩短有效停留时间，使 $D\propto Q^{-1}$ 减小，穿透率指数上升。高流量与高入口浓度叠加时风险最强，故采用质量负荷 $C_{\mathrm{in}}Q$ 选择高、低代表工况。
+  \item \textbf{电场电压。} $\partial C_{\mathrm{out}}/\partial U_i<0$，且指数模型使边际绝对减排逐渐递减。前三级的分场权重较高，第三场在当前最优点附近常具有最高的单位电耗减排收益；末级负责严格限值下的精细捕集余量。
+  \item \textbf{温度。} $125^\circ\mathrm C$ 附近有效迁移能力最高；偏离该温区会提高所需控制强度。图\ref{fig:tempsurface} 显示高温与低电压叠加时风险迅速增大，说明高温工况不宜依赖单一末级补偿。
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{fig07_temperature_voltage_surface.png}
+\caption{温度—电压耦合下的出口浓度响应面}
+\label{fig:tempsurface}
+\end{figure}
+
+\subsection{振打周期与瞬时峰值}
+
+图\ref{fig:rapping} 给出式\eqref{eq:duststate} 的示意积灰轨迹以及不同周期下的相位叠加峰值。振打周期存在两类相反效应：
+
+\begin{itemize}
+  \item 周期延长使单位时间振打次数减少，振打机械能耗下降；但极板尘负荷升高、捕集效率折减，且单次脱落尘饼更大，峰值幅度上升。
+  \item 周期缩短降低单次积灰量，却增加脉冲频率；若四场同步振打，即使单场峰值较小，也可能在出口叠加。
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{fig08_rapping_dynamics.png}
+\caption{极板积灰隐状态、振打脉冲与相位叠加示意}
+\label{fig:rapping}
+\end{figure}
+
+因此优化不能简单把 $T_i$ 推至最大值。式\eqref{eq:rapfactor} 中 $T^{1.2}$ 幅度项与 $T^{-0.5}$ 频率项形成内部折中，式\eqref{eq:dustconstraint} 则给出安全上限。现场控制还应施加相位约束，例如把四场触发相位按 $0,\frac14,\frac12,\frac34$ 周期错开；由于附件没有真实触发时刻，本文只把这一结论作为可执行规则，不伪造分钟级峰值拟合。
+
+\subsection{问题一结论的可信范围}
+
+附件可以可靠说明“输出已被量程封顶、操作量净效应不可识别”，也可以高精度识别能耗关系；入口、流量、电压、温度和振打的排放方向来自物理结构与文献，并通过基准情景传播和关键参数 $\pm30\%$ 压力测试检验。换言之，本文给出的不是一条看似精确的黑箱浓度曲线，而是一组满足机理、能审计其证据来源的风险外推曲线。
