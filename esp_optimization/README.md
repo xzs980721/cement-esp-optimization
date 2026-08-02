@@ -59,7 +59,7 @@ powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1
 - `outputs/figures/`：11 幅论文级 PNG 图。
 - `outputs/models/`、`outputs/logs/`：模型摘要和数据审计日志。
 - `tests/`：关键不变量、模型方向和结果验收测试。
-- `paper/`：A4 `ctexart` 正式论文、分章节源码与参考文献。
+- `paper/`：A4 `ctexart` 正式论文、分章节源码与参考文献；`paper/reference_materials/` 单独归档公开原文与 DOI 元数据。
 - `build/latex/`：LaTeX 编译辅助文件。
 - `output/pdf/`：最终 21 页正式竞赛论文 PDF。
 
