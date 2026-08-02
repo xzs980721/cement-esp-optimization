@@ -26,7 +26,7 @@
       445.0,
       445.0
     ],
-    "d_ref": 6.684604805846858,
+    "d_ref": 6.684604805846859,
     "stage_weights": [
       0.2977530557356889,
       0.2987666824265379,
@@ -35,11 +35,14 @@
     ],
     "temperature_reference_C": 126.00774801587302,
     "temperature_scale_C": 25.0,
-    "temperature_sensitivity": 0.12
+    "temperature_sensitivity": 0.12,
+    "rapping_load_coefficient": 0.07,
+    "plate_penalty": 0.18,
+    "stage_weight_concentration": 120.0
   },
   "regime_count": 8,
   "high_regime": 7,
   "low_regime": 1,
-  "weighted_power_10_kW": 2038.3098435086572,
-  "weighted_power_5_kW": 2146.720851440059
+  "weighted_power_10_kW": 2039.920068923252,
+  "weighted_power_5_kW": 2170.4045467233386
 }

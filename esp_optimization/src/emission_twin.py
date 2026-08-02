@@ -55,8 +55,7 @@ class EmissionScenarios:
     stage_weights: np.ndarray
     temperature_sensitivity: np.ndarray
     plate_penalty: np.ndarray
-    rapping_amplitude: np.ndarray
-    rapping_frequency_penalty: np.ndarray
+    rapping_load_coefficient: np.ndarray
     residual: np.ndarray
 
 
@@ -76,8 +75,7 @@ class EmissionTwin:
     temperature_sensitivity: float
     temperature_scale: float
     plate_penalty: float
-    rapping_amplitude: float
-    rapping_frequency_penalty: float
+    rapping_load_coefficient: float
     residual_sigma: float
     removal_relative_sd: float
     prior_relative_sd: float
@@ -116,11 +114,8 @@ class EmissionTwin:
                 rng, self.temperature_sensitivity, relative_sd, n_scenarios
             ),
             plate_penalty=_lognormal_draws(rng, self.plate_penalty, relative_sd, n_scenarios),
-            rapping_amplitude=_lognormal_draws(
-                rng, self.rapping_amplitude, relative_sd, n_scenarios
-            ),
-            rapping_frequency_penalty=_lognormal_draws(
-                rng, self.rapping_frequency_penalty, relative_sd, n_scenarios
+            rapping_load_coefficient=_lognormal_draws(
+                rng, self.rapping_load_coefficient, relative_sd, n_scenarios
             ),
             residual=rng.normal(0.0, self.residual_sigma * prior_scale, size=n_scenarios),
         )
@@ -147,12 +142,9 @@ class EmissionTwin:
             * stage_score
             * plate_factor
         )
-        amplitude_term = scenarios.stage_weights @ (t_ratio**1.20)
-        frequency_term = scenarios.stage_weights @ (t_ratio ** -0.50)
-        rapping_factor = (
-            1.0
-            + scenarios.rapping_amplitude * load_ratio * amplitude_term
-            + scenarios.rapping_frequency_penalty * frequency_term
+        accumulated_dust_term = scenarios.stage_weights @ t_ratio
+        rapping_factor = 1.0 + (
+            scenarios.rapping_load_coefficient * load_ratio * accumulated_dust_term
         )
         concentration = (
             1000.0
@@ -186,13 +178,10 @@ class EmissionTwin:
                 n, self.temperature_sensitivity * scale.get("temperature_sensitivity", 1.0)
             ),
             plate_penalty=np.full(n, self.plate_penalty * scale.get("plate_penalty", 1.0)),
-            rapping_amplitude=np.full(
-                n, self.rapping_amplitude * scale.get("rapping_amplitude", 1.0)
-            ),
-            rapping_frequency_penalty=np.full(
+            rapping_load_coefficient=np.full(
                 n,
-                self.rapping_frequency_penalty
-                * scale.get("rapping_frequency_penalty", 1.0),
+                self.rapping_load_coefficient
+                * scale.get("rapping_load_coefficient", 1.0),
             ),
             residual=np.zeros(n),
         )
@@ -219,9 +208,7 @@ def fit_emission_twin(audit: AuditResult, prior: dict[str, Any]) -> EmissionTwin
     t_ref = frame[T_COLUMNS].median().to_numpy(dtype=float)
     stage_weights = _derive_stage_weights(u_ref, prior)
 
-    rap_at_reference = 1.0 + float(prior["rapping_amplitude"]) + float(
-        prior["rapping_frequency_penalty"]
-    )
+    rap_at_reference = 1.0 + float(prior["rapping_load_coefficient"])
     # The dataset only identifies the operating-point removal exponent. Shape
     # parameters are literature-informed and their uncertainty is propagated.
     d_ref = float(
@@ -289,8 +276,7 @@ def fit_emission_twin(audit: AuditResult, prior: dict[str, Any]) -> EmissionTwin
         temperature_sensitivity=float(prior["temperature_sensitivity"]),
         temperature_scale=float(prior["temperature_scale_C"]),
         plate_penalty=float(prior["plate_penalty"]),
-        rapping_amplitude=float(prior["rapping_amplitude"]),
-        rapping_frequency_penalty=float(prior["rapping_frequency_penalty"]),
+        rapping_load_coefficient=float(prior["rapping_load_coefficient"]),
         residual_sigma=float(prior["log_residual_sigma"]),
         removal_relative_sd=float(prior["removal_scale_relative_sd"]),
         prior_relative_sd=float(prior["prior_relative_sd"]),

@@ -1,0 +1,5 @@
+﻿voltage_upper_factor,infeasible_regimes,all_regimes_feasible,weighted_power_kW,increase_vs_10_pct
+1.0,3,False,,
+1.01,2,False,,
+1.02,0,True,2170.4045467233386,6.396548560305172
+1.03,0,True,2145.480670175692,5.174742033307161

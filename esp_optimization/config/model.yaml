@@ -10,11 +10,18 @@ data:
 
 regimes:
   k_min: 3
-  k_max: 8
+  k_max: 10
+  selection_metric: silhouette
   switch_penalty: 8.0
   minimum_share: 0.01
   minimum_median_dwell_minutes: 15
-  bic_tie_tolerance: 10.0
+
+representative_regimes:
+  # Five percent of one week is 504 minutes, enough to exclude the 120-minute
+  # high-temperature anomaly while retaining both stable load extremes.
+  minimum_share: 0.05
+  # Rounded midpoint between the data q98=135.24 C and q99=152.90 C.
+  maximum_temperature_p95_C: 145.0
 
 emission_prior:
   # With unobserved field geometry/migration coefficients treated equally,
@@ -27,9 +34,10 @@ emission_prior:
   temperature_sensitivity: 0.12
   temperature_scale_C: 25.0
   plate_penalty: 0.18
-  rapping_amplitude: 0.055
-  rapping_frequency_penalty: 0.015
-  # Chance-constraint uncertainty uses the calibrated posterior spread.
+  # First-order dust mass balance: deposition rate x time between raps.
+  # Delta=0.07 preserves the former reference-point uplift 1+0.055+0.015.
+  rapping_load_coefficient: 0.07
+  # These are scenario widths, not a claimed full Bayesian posterior.
   # The wider +/-30% epistemic stress test is run separately.
   log_residual_sigma: 0.01
   removal_scale_relative_sd: 0.02
@@ -38,11 +46,16 @@ emission_prior:
 optimization:
   confidence: 0.95
   scenario_quantile_buffer: 0.025
+  # 768 leaves about 19 samples in the 2.5% design tail; 10,000 reduces the
+  # Monte Carlo standard error near 95% compliance to about 0.22 percentage point.
   training_scenarios: 768
   verification_scenarios: 10000
+  # For 8 variables this gives a 72-member DE population and at most about
+  # 6,500 global-search evaluations before local SLSQP refinement.
   differential_evolution_maxiter: 90
   differential_evolution_popsize: 9
   dust_load_limit: 1.45
   penalty_scale: 1000000.0
-  policy_stability_seeds: [2026, 2027, 2028]
-  q4_voltage_upper_extension_factor: 1.03
+  q4_voltage_screen_factor: 1.01
+  q4_voltage_upper_extension_factor: 1.02
+  q4_voltage_relief_factor: 1.03

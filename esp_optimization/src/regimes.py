@@ -103,7 +103,7 @@ def segment_regimes(
     switch_penalty: float = 8.0,
     minimum_share: float = 0.01,
     minimum_median_dwell: int = 15,
-    bic_tie_tolerance: float = 10.0,
+    selection_metric: str = "silhouette",
     seed: int = 2026,
 ) -> RegimeModel:
     scaled, robust_median, robust_iqr = _condition_matrix(frame, rolling_window)
@@ -152,11 +152,12 @@ def segment_regimes(
 
     valid_candidates = [candidate for candidate in candidates if candidate["valid"]]
     pool = valid_candidates if valid_candidates else candidates
-    best_bic = min(float(candidate["bic"]) for candidate in pool)
-    near_best = [
-        candidate for candidate in pool if float(candidate["bic"]) <= best_bic + bic_tie_tolerance
-    ]
-    selected = min(near_best, key=lambda candidate: int(candidate["k"]))
+    if selection_metric == "silhouette":
+        selected = max(pool, key=lambda candidate: float(candidate["silhouette"]))
+    elif selection_metric == "bic":
+        selected = min(pool, key=lambda candidate: float(candidate["bic"]))
+    else:
+        raise ValueError(f"Unknown regime selection metric: {selection_metric}")
     gmm = selected["gmm"]
     labels = np.asarray(selected["labels"], dtype=int)
     k = int(selected["k"])
@@ -223,4 +224,3 @@ def segment_regimes(
         robust_iqr=robust_iqr,
         selected_gmm=gmm,
     )
-

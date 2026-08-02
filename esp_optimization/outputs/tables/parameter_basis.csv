@@ -1,0 +1,5 @@
+﻿setting,value,data_anchor,interpretation
+temperature_scale_C,25.0,26.892251984126986,mean-to-99th-percentile high-temperature distance (rounded)
+dust_load_limit,1.45,1.462161983965664,99.5th percentile of historical normalized dust-load proxy (rounded)
+log_residual_sigma,0.01,0.00625648938121296,conservative rounding above censored operating-point relative spread
+stage_weight_concentration,120.0,0.03903604737544592,Dirichlet prior; data_anchor is mean absolute weight standard deviation

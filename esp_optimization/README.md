@@ -7,7 +7,7 @@
 - `C_out=50` 呈现显著边界堆积，本文将其作为疑似仪表上限删失进行建模，不做比例换算，并单独报告该假设的适用边界。
 - 原始排放标签无法识别控制效应；排放外推使用删失运行点锚定的物理信息模型，并单独报告先验敏感性。
 - 能耗模型采用 `U_i²` 与 `1/T_i`，全样本解释度约 99.8%，逐日留一 RMSE 约 6 kW。
-- 10 mg/Nm³在历史操作边界内可行；5 mg/Nm³有部分工况在原边界内不可行，因此另给出电压上界放宽 3% 的条件仿真。
+- 10 mg/Nm³在历史操作边界内可行；5 mg/Nm³有部分工况在原边界内不可行。按1%步长筛查后，电压上界放宽2%是首个全工况可行情景，3%仅作为容量裕量敏感性。
 
 详细结果见 [answers/逐问解答.md](answers/逐问解答.md)，正式论文源码见 [paper/main.tex](paper/main.tex)。
 
@@ -31,6 +31,7 @@ workspace/
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts\run_all.py
+.\.venv\Scripts\python.exe scripts\audit_regime_settings.py
 ```
 
 运行测试：
@@ -45,7 +46,7 @@ py -3.11 -m venv .venv
 powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1
 ```
 
-修正版成品输出到 `output/pdf/Cement_ESP_Optimization_Paper_Revised.pdf`，编译辅助文件保存在 `build/latex/`，不污染论文源码目录。
+正式论文输出到 `output/pdf/Cement_ESP_Optimization_Paper_Final.pdf`，编译辅助文件保存在 `build/latex/`，不污染论文源码目录。
 
 所有随机过程固定基准种子 2026。模型口径、机会约束、先验和优化参数均在 `config/model.yaml` 中，不需要修改源码。
 

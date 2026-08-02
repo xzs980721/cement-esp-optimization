@@ -6,6 +6,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.dates as mdates
+import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -23,10 +24,20 @@ COLORS = ["#145DA0", "#2E8B57", "#F39C12", "#C0392B", "#7D3C98", "#008C95", "#6C
 
 
 def setup_plot_style() -> None:
+    font_candidates = [
+        Path("C:/Windows/Fonts/msyh.ttc"),
+        Path("C:/Windows/Fonts/simhei.ttf"),
+    ]
+    registered_fonts: list[str] = []
+    for font_path in font_candidates:
+        if font_path.exists():
+            fm.fontManager.addfont(str(font_path))
+            registered_fonts.append(fm.FontProperties(fname=str(font_path)).get_name())
     sns.set_theme(style="whitegrid", context="notebook")
     plt.rcParams.update(
         {
-            "font.sans-serif": ["Microsoft YaHei", "SimHei", "Arial Unicode MS", "DejaVu Sans"],
+            "font.sans-serif": registered_fonts
+            + ["Microsoft YaHei", "SimHei", "Arial Unicode MS", "DejaVu Sans"],
             "axes.unicode_minus": False,
             "figure.dpi": 130,
             "savefig.dpi": 220,
@@ -138,7 +149,7 @@ def plot_regimes(frame: pd.DataFrame, regimes: RegimeModel, path: Path) -> None:
     axes[1].set_yticklabels([f"R{i}" for i in range(1, regimes.n_regimes + 1)])
     axes[1].xaxis.set_major_formatter(mdates.DateFormatter("%m-%d"))
     axes[1].set_title("时间正则化后的工况序列")
-    fig.suptitle(f"典型工况识别（BIC选择K={regimes.n_regimes}）", fontsize=15)
+    fig.suptitle(f"典型工况识别（轮廓系数选择K={regimes.n_regimes}）", fontsize=15)
     fig.tight_layout()
     _save(fig, path)
 
@@ -213,19 +224,18 @@ def plot_rapping_dynamics(twin: EmissionTwin, path: Path) -> None:
     minutes = np.arange(0, 70)
     fig, axes = plt.subplots(2, 1, figsize=(12, 6.5), sharex=True)
     for period, color in zip([180, 233, 290], [COLORS[1], COLORS[0], COLORS[3]]):
-        phase = 0.0; load = 0.0; loads = []; peaks = []
+        phase = 0.0; loads = []; peaks = []
         for _ in minutes:
-            load += 60.0 / period
             phase += 60.0 / period
             peak = 0.0
             if phase >= 1.0:
-                phase -= 1.0; peak = load; load *= 0.08
-            loads.append(load); peaks.append(peak)
+                phase -= 1.0; peak = period / 233.0
+            loads.append(phase); peaks.append(peak)
         axes[0].plot(minutes, loads, color=color, label=f"T={period}s")
         axes[1].stem(minutes, peaks, linefmt=color, markerfmt=" ", basefmt=" ", label=f"T={period}s")
-    axes[0].set(title="极板尘负荷状态", ylabel="相对积灰量"); axes[0].legend()
-    axes[1].set(title="振打触发的再飞扬脉冲", xlabel="时间/min", ylabel="相对峰值")
-    fig.suptitle("振打周期对积灰与瞬时峰值的动态影响", fontsize=15)
+    axes[0].set(title="归一化振打相位", ylabel="周期内积灰进度"); axes[0].legend()
+    axes[1].set(title="一阶质量守恒下的相对脉冲示意", xlabel="时间/min", ylabel="相对峰值")
+    fig.suptitle("振打周期对积灰与瞬时峰值的归一化示意", fontsize=15)
     fig.tight_layout()
     _save(fig, path)
 

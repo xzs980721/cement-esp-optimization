@@ -70,7 +70,7 @@ def _sensitivity_table(twin, high_frame, policy_10, policy_5, seed: int) -> pd.D
         "d_ref",
         "temperature_sensitivity",
         "plate_penalty",
-        "rapping_amplitude",
+        "rapping_load_coefficient",
     ]
     rows: list[dict[str, Any]] = []
     for parameter in parameters:
@@ -89,6 +89,24 @@ def _sensitivity_table(twin, high_frame, policy_10, policy_5, seed: int) -> pd.D
                     "5_policy_compliance": float(np.mean(c5 <= 5)),
                 }
             )
+    for factor in [0.5, 1.0, 2.0]:
+        altered = replace(
+            twin,
+            stage_weight_concentration=twin.stage_weight_concentration * factor,
+        )
+        scenarios = altered.scenario_pack(high_frame, n_scenarios=10000, seed=seed + len(rows))
+        c10 = altered.predict_scenarios(policy_10, scenarios)
+        c5 = altered.predict_scenarios(policy_5, scenarios)
+        rows.append(
+            {
+                "parameter": "stage_weight_concentration",
+                "factor": factor,
+                "p95_at_10_policy": float(np.quantile(c10, 0.95)),
+                "p95_at_5_policy": float(np.quantile(c5, 0.95)),
+                "10_policy_compliance": float(np.mean(c10 <= 10)),
+                "5_policy_compliance": float(np.mean(c5 <= 5)),
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -200,6 +218,12 @@ $$
 D_t=D_0\frac{Q_0}{Q_t}g_T(T_t)
 \left[\sum_{i=1}^4w_i\left(\frac{U_i}{U_{i,0}}\right)^2\right]
 g_L(\mathbf{T}_t,C_{\mathrm{in},t}Q_t).
+$$
+
+未知振打相位积分后采用最轻量的一阶修正：
+
+$$
+R_{\mathrm{rap}}=1+0.07L\sum_{i=1}^4 w_iT_i/T_{i,0}.
 $$"""
     power_formula = r"""$$
 P=\beta_0+\sum_{i=1}^4\beta_iU_i^2+\sum_{i=1}^4\gamma_i/T_i+\varepsilon.
@@ -227,9 +251,9 @@ $$"""
 
 {emission_formula}
 
-其中 $g_T$ 以附件温度均值 {twin.temperature_optimum:.2f}°C 为归一化参考中心，尺度固定为 25°C；该中心不解释为普适最优温度。$g_L$ 是长振打周期引起的积灰/反电晕折减。基准去除指数由右删失运行点和质量守恒锚定为 $D_0={twin.d_ref:.4f}$。在四场未观测几何/迁移系数等效的最小信息假设下，分场权重按附件中位电压平方归一化得到；温度曲率和再飞扬系数采用文献先验，并在计算中传播不确定性。
+其中 $g_T$ 以附件温度均值 {twin.temperature_optimum:.2f}°C 为归一化参考中心；温度99%分位与均值相差26.892°C，取整后用25°C作为无量纲尺度，该中心不解释为普适最优温度。$g_L$ 是长振打周期引起的积灰/反电晕折减。基准去除指数由右删失运行点和质量守恒锚定为 $D_0={twin.d_ref:.4f}$。在四场未观测几何/迁移系数等效的最小信息假设下，分场权重按附件中位电压平方归一化得到；Dirichlet集中度120对应单场权重平均标准差约0.039，并以集中度减半、加倍作敏感性检查。
 
-振打采用隐状态：极板尘负荷随捕集量累积，周期到达后大部分落入灰斗、小部分形成再飞扬脉冲。对未知振打相位积分后，95%排放分位数同时包含积灰效率损失和瞬时峰值风险。因此周期过长会积灰并放大单次峰值，过短则提高振打频率和机械能耗，存在内部折中点。
+振打采用隐状态：极板尘负荷随捕集量累积，周期到达后大部分落入灰斗、小部分形成再飞扬脉冲。附件没有真实触发相位，无法识别两个独立幂指数，故把稳态尘量 $LT_i$ 的一阶关系化为唯一系数0.07的线性修正；参考负荷和周期下放大7%。周期过长增加积灰与相位平均再飞扬风险，周期过短则通过数据拟合的 $1/T_i$ 功率项增加机械能耗，二者形成可解释折中。
 
 ![因素响应](../outputs/figures/fig06_effect_curves.png)
 
@@ -242,7 +266,7 @@ $$"""
 - 入口浓度近似按比例抬升出口浓度；流量增加缩短停留时间，使穿透率上升。
 - 电压通过迁移速度和去除指数发挥单调减排作用，边际减排收益随电压增大而递减。
 - {twin.temperature_optimum:.2f}°C 是由附件均值确定的归一化参考中心；模型以钟形先验描述偏离参考温区后的有效迁移能力折减，但不声称该温度是真实最优点。
-- 振打周期不能只按“越长越省电”处理：长周期降低振打频率，却增加极板尘负荷、效率衰减和单次再飞扬峰值。
+- 振打周期不能只按“越长越省电”处理：长周期降低振打频率，却增加极板尘负荷、效率衰减和相位平均再飞扬风险。
 
 证据边界如下：
 
@@ -252,7 +276,7 @@ $$"""
 
 ### 3.1 工况划分
 
-对温度、$\log C_{{in}}$、$\log Q$ 做15分钟中位数平滑和稳健标准化，再以时间正则化高斯混合模型划分。BIC在满足占比和持续时间约束的候选中选择 $K={regimes.n_regimes}$。
+对温度、$\log C_{{in}}$、$\log Q$ 做15分钟中位数平滑和稳健标准化，再以时间正则化高斯混合模型划分。候选扩展至 $K=3$--10 后BIC仍持续下降，不能给出内部最优点；在满足占比和持续时间约束的候选中，轮廓系数在 $K={regimes.n_regimes}$ 最大，故选取8类工作分辨率。
 
 {_markdown_table(regimes_view)}
 
@@ -300,11 +324,11 @@ $$"""
 
 ## 5. 问题4：10降至5的电耗代价
 
-在完全相同的历史安全边界内，5 mg/Nm³有 {raw_infeasible} 个工况无法通过独立95%机会约束复核，因此不能为全工况给出虚假的“边界内最优百分比”。为完成政策情景测算，另做明确标注的条件仿真：仅把各场历史最大电压上界放宽至 {voltage_extension:.3f} 倍，振打周期边界保持不变。
+在完全相同的历史观测边界内，5 mg/Nm³有 {raw_infeasible} 个工况无法通过独立95%机会约束复核，因此不能为全工况给出虚假的“边界内最优百分比”。按1%整数步长筛查，1%扩展仍有2类不可行，{(voltage_extension-1)*100:.0f}%是首次使全部工况可行的条件仿真；振打周期边界保持不变。3%扩展作为容量裕量敏感性，其加权增幅为5.17%。
 
 {_markdown_table(q4)}
 
-按历史工况占比加权，10 mg/Nm³最优电耗为 {weighted_10:.1f} kW；条件性5 mg/Nm³电耗为 {weighted_5:.1f} kW，增加 **{weighted_increase:.2f}%**。最高负荷 R{high_regime+1} 增幅为 **{high_increase:.2f}%**；12组独立场景重采样中有 {len(valid_bootstrap)} 组同时通过两级限值复核，其增幅95%区间为 **[{ci[0]:.2f}%, {ci[1]:.2f}%]**。
+按历史工况占比加权，10 mg/Nm³最优电耗为 {weighted_10:.1f} kW；条件性5 mg/Nm³电耗为 {weighted_5:.1f} kW，增加 **{weighted_increase:.2f}%**。最高负荷 R{high_regime+1} 增幅为 **{high_increase:.2f}%**；12组独立场景重采样中有 {len(valid_bootstrap)} 组同时通过两级限值复核，其增幅经验95%范围为 **[{ci[0]:.2f}%, {ci[1]:.2f}%]**。
 
 ![电耗增幅](../outputs/figures/fig11_q4_energy_increase.png)
 
@@ -318,7 +342,7 @@ $$"""
 
 ## 6. 稳健性、局限与复现
 
-- `sensitivity_high_regime.csv` 给出关键机理系数±30%扰动下的达标概率；先验减弱30%时，部分策略会失去达标性，说明5 mg/Nm³结论必须与现场标定联用。
+- `parameter_basis.csv` 汇总温度尺度、尘负荷阈值、残差尺度和权重集中度的数据锚点；`sensitivity_high_regime.csv` 给出关键机理系数±30%以及权重集中度减半/加倍的达标概率。整体尺度 $D_0$ 减弱30%时策略失效，说明5 mg/Nm³结论必须与现场标定联用。
 - `q4_high_regime_bootstrap.csv` 保存12组独立优化重采样，用于区间与算法稳定性检查。
 - 附件没有二次电流、实际振打触发时刻、粉尘比电阻和粒径分布；这些缺失是排放外推不确定性的主要来源。
 - 权威依据：[生态环境部水泥行业超低排放意见](https://www.mee.gov.cn/xxgk2018/xxgk/xxgk03/202401/t20240119_1064243.html)、[EPA电除尘性能模型](https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=9101MY0A.TXT)、[EPA电除尘检查手册](https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=9400034C.TXT)、[高温电除尘实验研究](https://doi.org/10.1016/j.seppur.2015.01.016)、[振打再飞扬研究](https://doi.org/10.1021/es00127a012)。
@@ -352,13 +376,24 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
         switch_penalty=float(regime_config["switch_penalty"]),
         minimum_share=float(regime_config["minimum_share"]),
         minimum_median_dwell=int(regime_config["minimum_median_dwell_minutes"]),
-        bic_tie_tolerance=float(regime_config["bic_tie_tolerance"]),
+        selection_metric=str(regime_config["selection_metric"]),
         seed=seed,
     )
     twin = fit_emission_twin(audit, config["emission_prior"])
     optimization_config = config["optimization"]
     result10 = optimize_policy(twin, power, audit.frame, regimes.labels, 10.0, optimization_config, seed)
     result5_raw = optimize_policy(twin, power, audit.frame, regimes.labels, 5.0, optimization_config, seed + 500)
+    voltage_screen = float(optimization_config["q4_voltage_screen_factor"])
+    result5_screen = optimize_policy(
+        twin,
+        power,
+        audit.frame,
+        regimes.labels,
+        5.0,
+        optimization_config,
+        seed + 700,
+        voltage_upper_factor=voltage_screen,
+    )
     voltage_extension = float(optimization_config["q4_voltage_upper_extension_factor"])
     result5_conditional = optimize_policy(
         twin,
@@ -370,10 +405,28 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
         seed + 900,
         voltage_upper_factor=voltage_extension,
     )
+    voltage_relief = float(optimization_config["q4_voltage_relief_factor"])
+    result5_relief = optimize_policy(
+        twin,
+        power,
+        audit.frame,
+        regimes.labels,
+        5.0,
+        optimization_config,
+        seed + 1100,
+        voltage_upper_factor=voltage_relief,
+    )
 
+    representative_config = config["representative_regimes"]
     eligible = regimes.centers.loc[
-        (regimes.centers["n"] >= max(200, int(0.05 * len(audit.frame))))
-        & (regimes.centers["Temp_C_p95"] < 145)
+        (
+            regimes.centers["n"]
+            >= int(float(representative_config["minimum_share"]) * len(audit.frame))
+        )
+        & (
+            regimes.centers["Temp_C_p95"]
+            < float(representative_config["maximum_temperature_p95_C"])
+        )
     ]
     low_regime = int(eligible.loc[eligible["mass_load_mean"].idxmin(), "regime"])
     high_regime = int(eligible.loc[eligible["mass_load_mean"].idxmax(), "regime"])
@@ -416,6 +469,75 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
     q4["voltage_upper_factor"] = voltage_extension
     weighted_10 = float(np.sum(q4["share"] * q4["power_10_kW"]))
     weighted_5 = float(np.sum(q4["share"] * q4["power_5_conditional_kW"]))
+
+    extension_rows = []
+    for factor, result in [
+        (1.0, result5_raw),
+        (voltage_screen, result5_screen),
+        (voltage_extension, result5_conditional),
+        (voltage_relief, result5_relief),
+    ]:
+        all_feasible = bool(result.table["feasible"].all())
+        weighted_power = float(
+            np.sum(regimes.centers["share"].to_numpy() * result.table["power_kW"].to_numpy())
+        )
+        extension_rows.append(
+            {
+                "voltage_upper_factor": factor,
+                "infeasible_regimes": int((~result.table["feasible"]).sum()),
+                "all_regimes_feasible": all_feasible,
+                "weighted_power_kW": weighted_power if all_feasible else np.nan,
+                "increase_vs_10_pct": (
+                    100.0 * (weighted_power - weighted_10) / weighted_10
+                    if all_feasible
+                    else np.nan
+                ),
+            }
+        )
+    extension_screen = pd.DataFrame(extension_rows)
+
+    load_ratio = (
+        audit.frame["C_in_gNm3"].to_numpy(dtype=float)
+        * audit.frame["Q_Nm3h"].to_numpy(dtype=float)
+        / (twin.c_in_ref * twin.q_ref)
+    )
+    weighted_cycle = (
+        audit.frame[[f"T{i}_s" for i in range(1, 5)]].to_numpy(dtype=float)
+        / twin.t_ref
+    ) @ twin.stage_weights
+    historical_dust_proxy = load_ratio * weighted_cycle
+    weight_sd = np.sqrt(
+        twin.stage_weights * (1.0 - twin.stage_weights)
+        / (twin.stage_weight_concentration + 1.0)
+    )
+    parameter_basis = pd.DataFrame(
+        [
+            {
+                "setting": "temperature_scale_C",
+                "value": twin.temperature_scale,
+                "data_anchor": float(audit.frame["Temp_C"].quantile(0.99) - audit.frame["Temp_C"].mean()),
+                "interpretation": "mean-to-99th-percentile high-temperature distance (rounded)",
+            },
+            {
+                "setting": "dust_load_limit",
+                "value": float(optimization_config["dust_load_limit"]),
+                "data_anchor": float(np.quantile(historical_dust_proxy, 0.995)),
+                "interpretation": "99.5th percentile of historical normalized dust-load proxy (rounded)",
+            },
+            {
+                "setting": "log_residual_sigma",
+                "value": twin.residual_sigma,
+                "data_anchor": float(twin.censor_sigma / twin.censor_mu),
+                "interpretation": "conservative rounding above censored operating-point relative spread",
+            },
+            {
+                "setting": "stage_weight_concentration",
+                "value": twin.stage_weight_concentration,
+                "data_anchor": float(np.mean(weight_sd)),
+                "interpretation": "Dirichlet prior; data_anchor is mean absolute weight standard deviation",
+            },
+        ]
+    )
 
     attribution = []
     for regime in range(regimes.n_regimes):
@@ -462,6 +584,8 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
         "q4_power_attribution.csv": attribution_table,
         "sensitivity_high_regime.csv": sensitivity,
         "q4_high_regime_bootstrap.csv": bootstrap,
+        "q4_voltage_extension_screen.csv": extension_screen,
+        "parameter_basis.csv": parameter_basis,
     }
     for name, table in tables.items():
         _write_csv(table, table_dir / name)
@@ -484,6 +608,9 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
             "temperature_reference_C": twin.temperature_optimum,
             "temperature_scale_C": twin.temperature_scale,
             "temperature_sensitivity": twin.temperature_sensitivity,
+            "rapping_load_coefficient": twin.rapping_load_coefficient,
+            "plate_penalty": twin.plate_penalty,
+            "stage_weight_concentration": twin.stage_weight_concentration,
         },
         "regime_count": regimes.n_regimes,
         "high_regime": high_regime,
