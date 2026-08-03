@@ -25,7 +25,7 @@ from src.optimization import (
 )
 from src.power_model import fit_power_surrogate
 from src.regimes import segment_regimes
-from src.reporting import COLORS, setup_plot_style
+from src.reporting import COLORS, setup_plot_style, save_figure
 
 
 FACTORS = np.arange(1.02, 1.101, 0.01)
@@ -197,21 +197,30 @@ def _load_context():
 def _plot(summary: pd.DataFrame, path: Path) -> None:
     setup_plot_style()
     x = summary["extension_pct"].to_numpy()
-    fig, axes = plt.subplots(1, 3, figsize=(14.2, 4.7))
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4.6))
 
-    axes[0].plot(x, summary["weighted_power_kW"], marker="o", color=COLORS[0])
-    axes[0].set_title("全周期加权功率")
-    axes[0].set_ylabel("kW")
-    axes[0].set_xlabel("电压上界扩展/%")
-    for x_value, y_value in zip(x, summary["weighted_power_kW"]):
-        axes[0].annotate(f"{y_value:.1f}", (x_value, y_value), xytext=(0, 6),
-                         textcoords="offset points", ha="center", fontsize=8)
+    # (a) Weighted power trend
+    axes[0].plot(x, summary["weighted_power_kW"], marker="o", color=COLORS[0], lw=1.2)
+    axes[0].set_title("(a) 全周期加权功率")
+    axes[0].set_ylabel("功率 / kW")
+    axes[0].set_xlabel("电压上界扩展 / %")
+    for xi, yi in zip(x, summary["weighted_power_kW"]):
+        axes[0].annotate(
+            f"{yi:.1f}",
+            (xi, yi),
+            xytext=(0, 6),
+            textcoords="offset points",
+            ha="center",
+            fontsize=7,
+        )
 
+    # (b) Stacked power increment attribution
     axes[1].bar(
         x,
         summary["weighted_voltage_increment_kW"],
         color=COLORS[0],
         label="电压项",
+        width=0.7,
     )
     axes[1].bar(
         x,
@@ -219,24 +228,35 @@ def _plot(summary: pd.DataFrame, path: Path) -> None:
         bottom=summary["weighted_voltage_increment_kW"],
         color=COLORS[2],
         label="振打周期项",
+        width=0.7,
     )
-    axes[1].set_title("相对10限值策略的增量功率")
-    axes[1].set_ylabel("kW")
-    axes[1].set_xlabel("电压上界扩展/%")
-    axes[1].legend()
+    axes[1].set_title("(b) Incremental power relative to 10 mg·Nm-³ baseline")
+    axes[1].set_ylabel("功率 / kW")
+    axes[1].set_xlabel("电压上界扩展 / %")
+    axes[1].legend(fontsize=7)
 
-    axes[2].plot(x, summary["r8_increase_pct"], marker="s", color=COLORS[3])
-    axes[2].set_title("最高负荷R8的功率增幅")
-    axes[2].set_ylabel("%")
-    axes[2].set_xlabel("电压上界扩展/%")
-    for x_value, y_value in zip(x, summary["r8_increase_pct"]):
-        axes[2].annotate(f"{y_value:.2f}", (x_value, y_value), xytext=(0, 6),
-                         textcoords="offset points", ha="center", fontsize=8)
+    # (c) R8 power increase
+    axes[2].plot(
+        x, summary["r8_increase_pct"], marker="s", color=COLORS[3], lw=1.2
+    )
+    axes[2].set_title("(c) 最高负荷 R8 的功率增幅")
+    axes[2].set_ylabel("增幅 / %")
+    axes[2].set_xlabel("电压上界扩展 / %")
+    for xi, yi in zip(x, summary["r8_increase_pct"]):
+        axes[2].annotate(
+            f"{yi:.2f}",
+            (xi, yi),
+            xytext=(0, 6),
+            textcoords="offset points",
+            ha="center",
+            fontsize=7,
+        )
 
-    fig.suptitle("电压上界扩展2%至10%的策略比较", fontsize=16, fontweight="bold")
+    fig.suptitle(
+        "Strategy comparison — voltage upper bound extension 2 % to 10 %"
+    )
     fig.tight_layout()
-    fig.savefig(path, dpi=230, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+    save_figure(fig, path)
 
 
 def main() -> None:

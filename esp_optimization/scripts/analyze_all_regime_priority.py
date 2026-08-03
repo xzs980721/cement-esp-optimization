@@ -19,7 +19,7 @@ from src.emission_twin import fit_emission_twin
 from src.optimization import POLICY_COLUMNS, policy_bounds, policy_priority_table
 from src.power_model import fit_power_surrogate
 from src.regimes import segment_regimes
-from src.reporting import setup_plot_style
+from src.reporting import COLORS, setup_plot_style, save_figure
 
 
 PARAMETER_ORDER = ["U1_kV", "U2_kV", "U3_kV", "U4_kV", "T1_s", "T2_s", "T3_s", "T4_s"]
@@ -66,43 +66,39 @@ def _plot_benefit_matrix(wide: pd.DataFrame, path: Path) -> None:
     rapping = wide[["T1_s", "T2_s", "T3_s", "T4_s"]]
 
     fig, axes = plt.subplots(
-        1,
-        2,
-        figsize=(12.8, 6.2),
-        gridspec_kw={"width_ratios": [1, 1], "wspace": 0.30},
+        1, 2, figsize=(12.5, 5.6),
+        gridspec_kw={"width_ratios": [1, 1], "wspace": 0.28},
     )
     sns.heatmap(
-        voltage,
-        annot=True,
-        fmt=".4f",
-        cmap="YlGnBu",
-        linewidths=0.6,
-        linecolor="white",
-        cbar_kws={"label": "减排收益 /(mg·Nm$^{-3}$·kW$^{-1}$)"},
+        voltage, annot=True, fmt=".4f", cmap="YlGnBu",
+        linewidths=0.5, linecolor="white",
+        cbar_kws={"label": "减排收益 / (mg/Nm3 per kW)", "shrink": 0.82},
+        annot_kws={"fontsize": 8},
         ax=axes[0],
     )
     sns.heatmap(
-        rapping,
-        annot=True,
-        fmt=".4f",
-        cmap="YlOrBr",
-        linewidths=0.6,
-        linecolor="white",
-        cbar_kws={"label": "减排收益 /(mg·Nm$^{-3}$·kW$^{-1}$)"},
+        rapping, annot=True, fmt=".4f", cmap="YlOrBr",
+        linewidths=0.5, linecolor="white",
+        cbar_kws={"label": "减排收益 / (mg/Nm3 per kW)", "shrink": 0.82},
+        annot_kws={"fontsize": 8},
         ax=axes[1],
     )
     for ax, title, columns in [
-        (axes[0], "提高电压 1% 的单位新增功率减排收益", voltage.columns),
-        (axes[1], "缩短振打周期 1% 的单位新增功率减排收益", rapping.columns),
+        (axes[0], "(a) 提高电压 1% 的单位新增功率减排收益", voltage.columns),
+        (axes[1], "(b) 缩短振打周期 1% 的单位新增功率减排收益", rapping.columns),
     ]:
-        ax.set_title(title, pad=12)
+        ax.set_title(title, pad=10)
         ax.set_xlabel("控制变量")
         ax.set_ylabel("典型工况")
-        ax.set_xticklabels([PARAMETER_LABELS[column] for column in columns], rotation=0)
+        ax.set_xticklabels(
+            [PARAMETER_LABELS[col] for col in columns], rotation=0,
+        )
         ax.set_yticklabels(wide.index, rotation=0)
-    fig.suptitle("八类工况的单位新增功率减排收益", fontsize=16, fontweight="bold", y=1.02)
-    fig.savefig(path, dpi=240, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+        ax.tick_params(axis="both", labelsize=8)
+
+    fig.suptitle("八类工况的单位新增功率减排收益", y=1.01)
+    fig.tight_layout()
+    save_figure(fig, path)
 
 
 def main() -> None:

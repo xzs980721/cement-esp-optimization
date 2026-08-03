@@ -23,7 +23,7 @@ from src.hierarchical_priority import (
 from src.optimization import POLICY_COLUMNS, policy_bounds
 from src.power_model import fit_power_surrogate
 from src.regimes import segment_regimes
-from src.reporting import COLORS, setup_plot_style
+from src.reporting import COLORS, setup_plot_style, save_figure
 
 
 ACTIVE_TOLERANCE = 1e-4
@@ -233,31 +233,43 @@ def _plot_dual_metrics(actions: pd.DataFrame, summary: pd.DataFrame, path: Path)
         best_relief.append(float(subset["dust_relief_per_added_kW"].max()))
 
     x = np.arange(len(labels))
-    width = 0.36
-    fig, axes = plt.subplots(1, 2, figsize=(13.2, 5.2))
-    axes[0].bar(x - width / 2, best_voltage, width, label="最佳电压变量", color=COLORS[0])
-    axes[0].bar(x + width / 2, best_period, width, label="最佳周期变量", color=COLORS[2])
-    axes[0].set_xticks(x, labels)
-    axes[0].set_ylabel("mg/Nm³ per kW")
-    axes[0].set_title("直接减排收益 $E_j$")
-    axes[0].legend()
+    width = 0.34
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 5))
+    axes[0].bar(
+        x - width / 2, best_voltage, width,
+        label="最佳电压变量", color=COLORS[0],
+    )
+    axes[0].bar(
+        x + width / 2, best_period, width,
+        label="最佳周期变量", color=COLORS[2],
+    )
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(labels)
+    axes[0].set_ylabel("mg/Nm3 per kW")
+    axes[0].set_title("(a) 直接减排收益 $E_j$")
+    axes[0].legend(fontsize=7)
 
-    colors = [COLORS[3] if active else COLORS[1] for active in summary["dust_constraint_active"]]
-    axes[1].bar(x, best_relief, color=colors)
-    axes[1].set_xticks(x, labels)
+    bar_colors = [
+        COLORS[3] if active else COLORS[1]
+        for active in summary["dust_constraint_active"]
+    ]
+    axes[1].bar(x, best_relief, color=bar_colors, width=0.6)
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels(labels)
     axes[1].set_ylabel("尘负荷指数 per kW")
-    axes[1].set_title("周期变量的约束松弛收益 $G_{T_i}$")
+    axes[1].set_title("(b) 周期变量的约束松弛收益 $G_{T_i}$")
     axes[1].legend(
         handles=[
-            Patch(facecolor=COLORS[1], label="约束不活跃：电压优先"),
-            Patch(facecolor=COLORS[3], label="约束活跃：周期优先"),
+            Patch(facecolor=COLORS[1], label="约束不活跃: 电压优先"),
+            Patch(facecolor=COLORS[3], label="约束活跃: 周期优先"),
         ],
         loc="lower right",
+        fontsize=7,
     )
-    fig.suptitle("八类工况的分层控制判据", fontsize=16, fontweight="bold")
+
+    fig.suptitle("八类工况的分层控制判据")
     fig.tight_layout()
-    fig.savefig(path, dpi=230, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+    save_figure(fig, path)
 
 
 def _draw_box(ax, xy, width, height, text, edge, fill):
@@ -271,7 +283,14 @@ def _draw_box(ax, xy, width, height, text, edge, fill):
         facecolor=fill,
     )
     ax.add_patch(box)
-    ax.text(xy[0] + width / 2, xy[1] + height / 2, text, ha="center", va="center", fontsize=11)
+    ax.text(
+        xy[0] + width / 2,
+        xy[1] + height / 2,
+        text,
+        ha="center",
+        va="center",
+        fontsize=9,
+    )
     return box
 
 
@@ -279,51 +298,53 @@ def _plot_control_flow(summary: pd.DataFrame, path: Path) -> None:
     setup_plot_style()
     r2 = summary.loc[summary["label"] == "R2"].iloc[0]
     r8 = summary.loc[summary["label"] == "R8"].iloc[0]
-    fig, ax = plt.subplots(figsize=(13.2, 5.6))
-    ax.set_xlim(0, 13.2)
-    ax.set_ylim(0, 5.6)
+    fig, ax = plt.subplots(figsize=(13, 5.2))
+    ax.set_xlim(0, 13)
+    ax.set_ylim(0, 5.2)
     ax.axis("off")
     lanes = [
-        (4.05, "低负荷 R2", r2, COLORS[0], "#EAF2F8"),
-        (1.20, "高负荷 R8", r8, COLORS[3], "#FDEDEC"),
+        (3.90, "低负荷 R2", r2, COLORS[0], "#E8F0F8"),
+        (1.05, "高负荷 R8", r8, COLORS[3], "#FDE8E6"),
     ]
     for y, label, row, color, fill in lanes:
-        ax.text(0.15, y + 0.42, label, fontsize=13, fontweight="bold", color=color, va="center")
+        ax.text(
+            0.12, y + 0.38, label, fontsize=12,
+            fontweight="bold", color=color, va="center",
+        )
         slack = max(0.0, 100 * float(row["relative_dust_slack"]))
         primary = str(row["primary_parameter"]).replace("_kV", "").replace("_s", "")
         secondary = str(row["secondary_parameter"]).replace("_kV", "").replace("_s", "")
         texts = (
             [
-                f"$I_M={row['dust_load_index']:.4f}$\n裕量 {slack:.2f}%",
+                f"$I_M$ = {row['dust_load_index']:.4f}\n裕量 {slack:.2f}%",
                 "尘负荷约束不活跃",
                 "按直接收益 $E_j$ 排序",
                 f"先调 {primary}\n其次 {secondary}",
             ]
-            if label.endswith("R2")
+            if label.startswith("低")
             else [
-                f"$I_M={row['dust_load_index']:.4f}$\n裕量 {slack:.2f}%",
+                f"$I_M$ = {row['dust_load_index']:.4f}\n裕量 {slack:.2f}%",
                 "尘负荷约束活跃",
                 "按松弛收益 $G_{T_i}$ 排序",
                 f"先调 {primary}\n恢复裕量后调 {secondary}",
             ]
         )
-        xs = [2.05, 4.85, 7.65, 10.45]
-        for index, (x, text) in enumerate(zip(xs, texts)):
-            _draw_box(ax, (x, y), 2.15, 0.84, text, color, fill)
-            if index < 3:
+        xs = [1.90, 4.55, 7.25, 10.0]
+        for idx, (bx, text) in enumerate(zip(xs, texts)):
+            _draw_box(ax, (bx, y), 2.2, 0.82, text, color, fill)
+            if idx < 3:
                 ax.add_patch(
                     FancyArrowPatch(
-                        (x + 2.15, y + 0.42),
-                        (xs[index + 1], y + 0.42),
+                        (bx + 2.2, y + 0.41),
+                        (xs[idx + 1], y + 0.41),
                         arrowstyle="-|>",
-                        mutation_scale=14,
-                        linewidth=1.6,
+                        mutation_scale=13,
+                        linewidth=1.4,
                         color=color,
                     )
                 )
-    ax.set_title("R2 与 R8 的词典序控制流程", fontsize=16, fontweight="bold", pad=14)
-    fig.savefig(path, dpi=230, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+    ax.set_title("R2 与 R8 的词典序控制流程", pad=12)
+    save_figure(fig, path)
 
 
 def _write_report(
