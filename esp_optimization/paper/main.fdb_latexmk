@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1785673121.22656 "main.aux" "main.bbl" "main" 1785673129.4936 0
+["bibtex main"] 1785673677.14223 "main.aux" "main.bbl" "main" 1785673684.902 0
   "./references.bib" 1785662203 3139 077cb70ca9e6eb2c91d5eb57ed7ca5dc ""
   "c:/texlive/2024/texmf-dist/bibtex/bst/base/unsrt.bst" 1785651790 18030 1376b4b231b50c66211e47e42eda2875 ""
-  "main.aux" 1785673127 16951 d8875564f7337536dea61b169291945b "pdflatex"
+  "main.aux" 1785673683 16951 f6ec769bca3ab4259f8e51732aa330ce "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1785673121.53754 "e:/数模校赛2026/cement-esp-optimization/esp_optimization/paper/main.tex" "main.pdf" "main" 1785673129.49478 0
+["pdflatex"] 1785673677.57807 "e:/数模校赛2026/cement-esp-optimization/esp_optimization/paper/main.tex" "main.pdf" "main" 1785673684.90321 0
   "../outputs/figures/fig01_data_audit.png" 1785662202 384918 b79499bb16761c8f1ab192f77db47da2 ""
   "../outputs/figures/fig02_censor_diagnostics.png" 1785662202 142723 dde786e1ed2e36efbf9bc39a0b980ca1 ""
   "../outputs/figures/fig03_power_model.png" 1785662202 242446 784032e86460a5ca9e6b447ec77f1cd8 ""
@@ -475,18 +475,18 @@
   "c:/texlive/2024/texmf-var/web2c/pdftex/pdflatex.fmt" 1785655069 3656531 13f9c51a95a86d10681398392ae8fba4 ""
   "c:/texlive/2024/texmf.cnf" 1785654911 793 7228df7618ab1195a4b92ae01c3f4576 ""
   "e:/数模校赛2026/cement-esp-optimization/esp_optimization/paper/main.tex" 1785662203 2942 54a474101197fedf76214adc2392be54 ""
-  "main.aux" 1785673127 16951 d8875564f7337536dea61b169291945b "pdflatex"
-  "main.bbl" 1785673121 2187 157f9f476549489b6dabc1ee2728a40d "bibtex main"
-  "main.out" 1785673127 7561 7da73a98ef73e7d28756c887f4c0c7db "pdflatex"
+  "main.aux" 1785673683 16951 f6ec769bca3ab4259f8e51732aa330ce "pdflatex"
+  "main.bbl" 1785673677 2187 157f9f476549489b6dabc1ee2728a40d "bibtex main"
+  "main.out" 1785673683 7561 7da73a98ef73e7d28756c887f4c0c7db "pdflatex"
   "main.tex" 1785662203 2942 54a474101197fedf76214adc2392be54 ""
   "sections/00_abstract.tex" 1785662203 3584 2c452f7be576bde8cfa1a76d1742fd9b ""
   "sections/01_problem.tex" 1785672712 6926 eb07f38366e251ed6d55361fbb3efab2 ""
   "sections/02_data.tex" 1785662203 4850 2737b141c71fef37d6deb507fdf5e730 ""
-  "sections/03_model.tex" 1785672712 11283 d912b1cb9eb7bf025aaf527cf1d7de99 ""
+  "sections/03_model.tex" 1785673668 11281 7e6be837fcf7ffdff11968eae3a70404 ""
   "sections/04_question1.tex" 1785672712 4142 e6dec305ca09b93695c60d32d9b5aae7 ""
   "sections/05_question2.tex" 1785672743 8166 07562991e60770c6f44eb0e97ad5bb30 ""
   "sections/06_question3.tex" 1785662203 4930 d0682502f37289ba193bd8be8aed9122 ""
-  "sections/07_question4.tex" 1785672906 5395 91eaa3c3854264d9948d725646361129 ""
+  "sections/07_question4.tex" 1785673668 5117 0994e6537538df3efe3c54254a273827 ""
   "sections/08_validation.tex" 1785673064 3635 b734a85c126acf0bc35879b3176d4dbb ""
   "sections/09_conclusion.tex" 1785662203 1662 4b61fa43fbd403ff7bdcbc462490b9dd ""
   "sections/10_appendix.tex" 1785673034 4629 6af3b58e91c5cb4aba84b4409cb1ce62 ""

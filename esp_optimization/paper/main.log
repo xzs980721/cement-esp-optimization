@@ -1199,10 +1199,6 @@ Package CJKpunct Info: use punctuation spaces for family 'zhfs' with punctstyle 
 LaTeX2e <2026-06-01>
 L3 programming layer <2026/07/13>
  ***********
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 7DA73A98EF73E7D28756C887F4C0C7DB;7561.
  ) 
