@@ -3,19 +3,24 @@
 \bibitem{mee2024opinion}
 {中华人民共和国生态环境部等部门}.
 \newblock 关于推进实施水泥行业超低排放的意见.
-\newblock \url{https://www.mee.gov.cn/xxgk2018/xxgk/xxgk03/202401/t20240119_1064243.html}, 2024.
+\newblock
+  \url{https://www.mee.gov.cn/xxgk2018/xxgk/xxgk03/202401/t20240119_1064243.html},
+  2024.
 \newblock 访问日期：2026-08-01.
 
 \bibitem{mee2024qa}
 {中华人民共和国生态环境部大气环境司}.
-\newblock 有关负责人就水泥、焦化行业超低排放意见答记者问.
-\newblock \url{https://www.mee.gov.cn/ywdt/zbft/202401/t20240119_1064280.shtml}, 2024.
+\newblock
+  有关负责人就水泥、焦化行业超低排放意见答记者问.
+\newblock
+  \url{https://www.mee.gov.cn/ywdt/zbft/202401/t20240119_1064280.shtml}, 2024.
 \newblock 访问日期：2026-08-01.
 
 \bibitem{nichols1972epa}
 Grady~B. Nichols and John~P. Gooch.
 \newblock An electrostatic precipitator performance model.
-\newblock Technical Report EPA-650/2-74-132, U.S. Environmental Protection Agency, 1972.
+\newblock Technical Report EPA-650/2-74-132, U.S. Environmental Protection
+  Agency, 1972.
 
 \bibitem{white1963esp}
 Harry~J. White.
@@ -23,28 +28,34 @@ Harry~J. White.
 \newblock Addison-Wesley, Reading, Massachusetts, 1963.
 
 \bibitem{xu2015hightemp}
-Xi~Xu, Xiang Gao, Pei Yan, Weizhuo Zhu, Chenghang Zheng, Yi~Wang, Zhongyang Luo, and Kefa Cen.
-\newblock Particle migration and collection in a high-temperature electrostatic precipitator.
+Xi~Xu, Xiang Gao, Pei Yan, Weizhuo Zhu, Chenghang Zheng, Yi~Wang, Zhongyang
+  Luo, and Kefa Cen.
+\newblock Particle migration and collection in a high-temperature electrostatic
+  precipitator.
 \newblock {\em Separation and Purification Technology}, 143:184--191, 2015.
 
 \bibitem{bush1984rapping}
 P.~Vann Bush.
-\newblock Study of rapping reentrainment emissions from a pilot-scale electrostatic precipitator.
+\newblock Study of rapping reentrainment emissions from a pilot-scale
+  electrostatic precipitator.
 \newblock {\em Environmental Science \& Technology}, 18(9):699--705, 1984.
 
 \bibitem{neundorfer1981rapping}
 Michael Neundorfer.
-\newblock Electrode cleaning systems: Optimizing rapping energy and rapping control.
+\newblock Electrode cleaning systems: Optimizing rapping energy and rapping
+  control.
 \newblock {\em Environment International}, 6(1--6):279--287, 1981.
 
 \bibitem{li2013ga}
 Zhuohan Li, Cheng Shao, Yi~An, and Gaofeng Xu.
-\newblock Energy-saving optimal control for a factual electrostatic precipitator with multiple electric-field stages based on ga.
+\newblock Energy-saving optimal control for a factual electrostatic
+  precipitator with multiple electric-field stages based on ga.
 \newblock {\em Journal of Process Control}, 23(8):1041--1051, 2013.
 
 \bibitem{szabo1981inspection}
 Michael~F. Szabo, Yatendra~M. Shah, and S.~P. Schliesser.
-\newblock Inspection manual for evaluation of electrostatic precipitator performance.
+\newblock Inspection manual for evaluation of electrostatic precipitator
+  performance.
 \newblock Technical report, U.S. Environmental Protection Agency, 1981.
 
 \end{thebibliography}

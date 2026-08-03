@@ -197,32 +197,43 @@ def _load_context():
 def _plot(summary: pd.DataFrame, path: Path) -> None:
     setup_plot_style()
     x = summary["extension_pct"].to_numpy()
-    fig, axes = plt.subplots(1, 3, figsize=(14, 4.6))
+    fig = plt.figure(figsize=(9.2, 5.4))
+    grid = fig.add_gridspec(2, 2, width_ratios=(1.12, 1), hspace=0.42, wspace=0.30)
+    ax_power = fig.add_subplot(grid[:, 0])
+    ax_attribution = fig.add_subplot(grid[0, 1])
+    ax_r8 = fig.add_subplot(grid[1, 1])
 
     # (a) Weighted power trend
-    axes[0].plot(x, summary["weighted_power_kW"], marker="o", color=COLORS[0], lw=1.2)
-    axes[0].set_title("(a) 全周期加权功率")
-    axes[0].set_ylabel("功率 / kW")
-    axes[0].set_xlabel("电压上界扩展 / %")
+    ax_power.plot(
+        x, summary["weighted_power_kW"], marker="o", color=COLORS[0], lw=1.4,
+    )
+    ax_power.axvspan(3, 10, color=COLORS[1], alpha=0.08, lw=0)
+    ax_power.set_title("(a) 全周期加权功率")
+    ax_power.set_ylabel("功率 / kW")
+    ax_power.set_xlabel("电压上界扩展 / %")
+    selected = {2, 3, 10}
     for xi, yi in zip(x, summary["weighted_power_kW"]):
-        axes[0].annotate(
-            f"{yi:.1f}",
-            (xi, yi),
-            xytext=(0, 6),
-            textcoords="offset points",
-            ha="center",
-            fontsize=7,
-        )
+        if int(round(xi)) in selected:
+            offset = (6, 7) if int(round(xi)) == 2 else ((-6, 7) if int(round(xi)) == 10 else (0, 7))
+            alignment = "left" if int(round(xi)) == 2 else ("right" if int(round(xi)) == 10 else "center")
+            ax_power.annotate(
+                f"{yi:.1f}", (xi, yi), xytext=offset,
+                textcoords="offset points", ha=alignment, fontsize=7.5,
+            )
+    ax_power.text(
+        6.5, 0.04, "边际变化趋缓区间", transform=ax_power.get_xaxis_transform(),
+        ha="center", va="bottom", fontsize=7.5, color=COLORS[1],
+    )
 
     # (b) Stacked power increment attribution
-    axes[1].bar(
+    ax_attribution.bar(
         x,
         summary["weighted_voltage_increment_kW"],
         color=COLORS[0],
         label="电压项",
         width=0.7,
     )
-    axes[1].bar(
+    ax_attribution.bar(
         x,
         summary["weighted_rapping_increment_kW"],
         bottom=summary["weighted_voltage_increment_kW"],
@@ -230,32 +241,29 @@ def _plot(summary: pd.DataFrame, path: Path) -> None:
         label="振打周期项",
         width=0.7,
     )
-    axes[1].set_title("(b) Incremental power relative to 10 mg·Nm-³ baseline")
-    axes[1].set_ylabel("功率 / kW")
-    axes[1].set_xlabel("电压上界扩展 / %")
-    axes[1].legend(fontsize=7)
+    ax_attribution.set_title("(b) 相对 10 mg·Nm$^{-3}$ 策略的增量功率")
+    ax_attribution.set_ylabel("增量功率 / kW")
+    ax_attribution.set_xlabel("电压上界扩展 / %")
+    ax_attribution.legend(ncol=2, loc="upper right", fontsize=7)
 
     # (c) R8 power increase
-    axes[2].plot(
+    ax_r8.plot(
         x, summary["r8_increase_pct"], marker="s", color=COLORS[3], lw=1.2
     )
-    axes[2].set_title("(c) 最高负荷 R8 的功率增幅")
-    axes[2].set_ylabel("增幅 / %")
-    axes[2].set_xlabel("电压上界扩展 / %")
+    ax_r8.axvspan(3, 10, color=COLORS[3], alpha=0.05, lw=0)
+    ax_r8.set_title("(c) 最高负荷 R8 的功率增幅")
+    ax_r8.set_ylabel("功率增幅 / %")
+    ax_r8.set_xlabel("电压上界扩展 / %")
     for xi, yi in zip(x, summary["r8_increase_pct"]):
-        axes[2].annotate(
-            f"{yi:.2f}",
-            (xi, yi),
-            xytext=(0, 6),
-            textcoords="offset points",
-            ha="center",
-            fontsize=7,
-        )
+        if int(round(xi)) in selected:
+            offset = (6, 6) if int(round(xi)) == 2 else ((-6, 6) if int(round(xi)) == 10 else (0, 6))
+            alignment = "left" if int(round(xi)) == 2 else ("right" if int(round(xi)) == 10 else "center")
+            ax_r8.annotate(
+                f"{yi:.2f}%", (xi, yi), xytext=offset,
+                textcoords="offset points", ha=alignment, fontsize=7.5,
+            )
 
-    fig.suptitle(
-        "Strategy comparison — voltage upper bound extension 2 % to 10 %"
-    )
-    fig.tight_layout()
+    fig.subplots_adjust(left=0.08, right=0.98, bottom=0.11, top=0.94)
     save_figure(fig, path)
 
 

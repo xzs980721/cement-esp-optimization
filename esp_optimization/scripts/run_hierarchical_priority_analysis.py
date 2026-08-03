@@ -303,8 +303,8 @@ def _plot_control_flow(summary: pd.DataFrame, path: Path) -> None:
     ax.set_ylim(0, 5.2)
     ax.axis("off")
     lanes = [
-        (3.90, "低负荷 R2", r2, COLORS[0], "#E8F0F8"),
-        (1.05, "高负荷 R8", r8, COLORS[3], "#FDE8E6"),
+        (3.90, "低负荷 R2", r2, COLORS[1], "#EDF6F5"),
+        (1.05, "高负荷 R8", r8, COLORS[3], "#F9ECEA"),
     ]
     for y, label, row, color, fill in lanes:
         ax.text(

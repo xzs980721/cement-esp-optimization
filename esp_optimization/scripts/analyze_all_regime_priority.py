@@ -19,7 +19,12 @@ from src.emission_twin import fit_emission_twin
 from src.optimization import POLICY_COLUMNS, policy_bounds, policy_priority_table
 from src.power_model import fit_power_surrogate
 from src.regimes import segment_regimes
-from src.reporting import COLORS, setup_plot_style, save_figure
+from src.reporting import (
+    RAPPING_CMAP,
+    VOLTAGE_CMAP,
+    setup_plot_style,
+    save_figure,
+)
 
 
 PARAMETER_ORDER = ["U1_kV", "U2_kV", "U3_kV", "U4_kV", "T1_s", "T2_s", "T3_s", "T4_s"]
@@ -70,14 +75,14 @@ def _plot_benefit_matrix(wide: pd.DataFrame, path: Path) -> None:
         gridspec_kw={"width_ratios": [1, 1], "wspace": 0.28},
     )
     sns.heatmap(
-        voltage, annot=True, fmt=".4f", cmap="YlGnBu",
+        voltage, annot=True, fmt=".4f", cmap=VOLTAGE_CMAP,
         linewidths=0.5, linecolor="white",
         cbar_kws={"label": "减排收益 / (mg/Nm3 per kW)", "shrink": 0.82},
         annot_kws={"fontsize": 8},
         ax=axes[0],
     )
     sns.heatmap(
-        rapping, annot=True, fmt=".4f", cmap="YlOrBr",
+        rapping, annot=True, fmt=".4f", cmap=RAPPING_CMAP,
         linewidths=0.5, linecolor="white",
         cbar_kws={"label": "减排收益 / (mg/Nm3 per kW)", "shrink": 0.82},
         annot_kws={"fontsize": 8},
