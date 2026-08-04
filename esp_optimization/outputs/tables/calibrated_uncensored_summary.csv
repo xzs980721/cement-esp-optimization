@@ -1,0 +1,15 @@
+﻿metric,value
+n_uncensored,4539.0
+mean_mgNm3,49.76138576779026
+sd_mgNm3,0.1800784459593051
+min_mgNm3,48.74
+max_mgNm3,49.99
+q0.5_mgNm3,49.1469
+q2.5_mgNm3,49.33
+q5_mgNm3,49.41
+q25_mgNm3,49.66
+q50_mgNm3,49.8
+q75_mgNm3,49.9
+q95_mgNm3,49.98
+q97.5_mgNm3,49.99
+q99.5_mgNm3,49.99

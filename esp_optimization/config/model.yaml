@@ -43,6 +43,14 @@ emission_prior:
   removal_scale_relative_sd: 0.02
   prior_relative_sd: 0.10
 
+calibrated_model:
+  # The observation layer is fitted only to readings strictly below the
+  # suspected 50 mg/Nm3 cap.  It contains no unsupported factor coefficients.
+  threshold_mgNm3: 50.0
+  resolution_mgNm3: 0.01
+  # Jeffreys smoothing for the discrete 0.01 mg/Nm3 probability mass function.
+  dirichlet_alpha: 0.5
+
 optimization:
   confidence: 0.95
   scenario_quantile_buffer: 0.025

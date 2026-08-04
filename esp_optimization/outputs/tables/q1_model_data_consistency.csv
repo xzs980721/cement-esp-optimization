@@ -1,0 +1,9 @@
+﻿metric,observed,model_or_diagnostic,absolute_gap,interpretation
+censor_fraction,0.5474576271186441,0.5460565301587028,0.0014010969599412837,marginal censored-normal calibration
+uncensored_mean_mgNm3,49.76138576779026,49.76293592404416,0.001550156253898649,conditional mean below the censor threshold
+uncensored_q25_mgNm3,49.66,49.65799415075244,0.0020058492475598655,conditional quantile below the censor threshold
+uncensored_q50_mgNm3,49.8,49.80179087865627,0.0017908786562728096,conditional quantile below the censor threshold
+uncensored_q75_mgNm3,49.9,49.9074901719011,0.007490171901103793,conditional quantile below the censor threshold
+conditional_censor_auc,0.5,0.497810693771205,0.002189306228794985,0.5 denotes no conditional discrimination
+uncensored_prediction_correlation,0.0,0.004318113385958494,0.004318113385958494,near zero denotes no conditional tracking
+ordinary_ols_r2,0.0,0.0008149708998228533,0.0008149708998228533,raw operating variables have negligible explanatory power

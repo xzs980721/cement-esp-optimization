@@ -32,6 +32,7 @@ workspace/
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts\run_all.py
+.\.venv\Scripts\python.exe scripts\run_calibrated_model.py
 .\.venv\Scripts\python.exe scripts\audit_regime_settings.py
 .\.venv\Scripts\python.exe scripts\run_hierarchical_priority_analysis.py
 ```
@@ -52,6 +53,8 @@ powershell -ExecutionPolicy Bypass -File scripts\build_paper.ps1 -OutputName Cem
 默认正式论文输出到 `output/pdf/Cement_ESP_Optimization_Paper.pdf`；可用 `-OutputName` 指定其他文件名。编译辅助文件保存在 `build/latex/`，不污染论文源码目录。
 
 所有随机过程固定基准种子 2026。模型口径、机会约束、先验和优化参数均在 `config/model.yaml` 中，不需要修改源码。
+
+`run_calibrated_model.py` 独立运行“非触顶经验分布 + 物理相对响应”双层模型。它只生成带 `calibrated_` 前缀的表格、图形、模型摘要和 `answers/calibrated_四问影响报告.md`，不会覆盖原四问结果或修改论文。观测层用于复现未触顶数据分布，物理层只承担相对响应和 10/5 mg/Nm³ 情景外推。
 
 ## 目录
 

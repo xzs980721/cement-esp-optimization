@@ -22,6 +22,7 @@ from .optimization import (
     power_increment_attribution,
 )
 from .power_model import fit_power_surrogate
+from .q1_diagnostics import q1_model_data_consistency
 from .regimes import segment_regimes
 from .reporting import generate_all_figures
 
@@ -381,6 +382,7 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
         seed=seed,
     )
     twin = fit_emission_twin(audit, config["emission_prior"])
+    q1_consistency = q1_model_data_consistency(audit, twin)
     optimization_config = config["optimization"]
     result10 = optimize_policy(twin, power, audit.frame, regimes.labels, 10.0, optimization_config, seed)
     result5_raw = optimize_policy(twin, power, audit.frame, regimes.labels, 5.0, optimization_config, seed + 500)
@@ -576,6 +578,7 @@ def run_all(config_path: str | Path) -> dict[str, Any]:
         "regime_centers.csv": regimes.centers,
         "regime_transition_matrix.csv": regimes.transition_matrix.reset_index(names="from_regime"),
         "emission_identifiability.csv": twin.identifiability,
+        "q1_model_data_consistency.csv": q1_consistency,
         "optimal_policy_10.csv": result10.table,
         "optimal_policy_5_raw_bounds.csv": result5_raw.table,
         "optimal_policy_5_conditional_extension.csv": result5_conditional.table,

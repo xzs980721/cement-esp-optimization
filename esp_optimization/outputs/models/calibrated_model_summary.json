@@ -1,0 +1,31 @@
+{
+  "observation_layer": {
+    "n_uncensored": 4539,
+    "mean_mgNm3": 49.76138576779026,
+    "sd_mgNm3": 0.1800784459593051,
+    "threshold_mgNm3": 50.0,
+    "resolution_mgNm3": 0.01,
+    "dirichlet_alpha": 0.5,
+    "daily_cv": {
+      "mean_ks_distance": 0.036314875622258734,
+      "mean_wasserstein_mgNm3": 0.011604409120246408,
+      "mean_absolute_mean_error_mgNm3": 0.010561729182348196,
+      "mean_interval_coverage": 0.9750295164985215
+    }
+  },
+  "physical_layer": {
+    "definition": "regime-reference physical concentration ratio",
+    "absolute_historical_prediction_used": false
+  },
+  "optimization": {
+    "all_10_feasible": false,
+    "all_10_110pct_feasible": true,
+    "raw_5_infeasible_regimes": 2,
+    "all_5_110pct_feasible": true,
+    "weighted_power_10_kW": 2021.9481728427609,
+    "weighted_power_5_kW": 2129.5065470477084,
+    "weighted_increase_pct": 5.31954160099592,
+    "low_regime": 1,
+    "high_regime": 7
+  }
+}

@@ -393,6 +393,11 @@ def plot_regime_centers(regimes: RegimeModel, path: Path) -> None:
 def plot_effect_curves(twin: EmissionTwin, path: Path) -> None:
     reference_policy = np.r_[twin.u_ref, twin.t_ref]
     fig, axes = plt.subplots(2, 2, figsize=(9.2, 6.2))
+    reference_concentration = float(
+        twin.predict_deterministic(
+            reference_policy, twin.temp_ref, twin.c_in_ref, twin.q_ref,
+        )[0]
+    )
 
     # (a) 入口浓度效应
     cin = np.linspace(18, 72, 100)
@@ -423,47 +428,65 @@ def plot_effect_curves(twin: EmissionTwin, path: Path) -> None:
     axes[0, 1].set_ylabel(r"预测浓度 $C_{\mathrm{out}}$ / (mg·Nm$^{-3}$)")
     axes[0, 1].set_title("(b) 流量 / 停留时间效应")
 
-    # (c) 分场电压单调效应
-    multipliers = np.linspace(0.8, 1.2, 100)
-    for i in range(4):
-        values = [
-            twin.predict_deterministic(
-                _voltage_perturb(reference_policy, i, m),
-                twin.temp_ref, twin.c_in_ref, twin.q_ref,
-            )[0]
-            for m in multipliers
-        ]
-        axes[1, 0].plot(
-            multipliers, values, label=rf"$U_{i+1}$", color=VOLTAGE_COLORS[i],
-            lw=1.25, ls=("-", "--", "-.", ":")[i],
-        )
-    axes[1, 0].set_xlabel("相对基准电压")
-    axes[1, 0].set_ylabel(r"预测浓度 $C_{\mathrm{out}}$ / (mg·Nm$^{-3}$)")
-    axes[1, 0].set_title("(c) 分场电压单调效应")
-    axes[1, 0].legend(fontsize=7, ncol=2)
+    # 分场权重两两接近时，连续响应曲线会发生数学上的重合。以参考点
+    # 两侧的局部效应柱代替四条曲线，既保留原权重，也避免遮蔽。
+    perturbations = (0.8, 1.2)
+    x = np.arange(4)
+    bar_width = 0.34
 
-    # (d) 振打周期积灰-再飞扬折中
-    for i in range(4):
-        values = [
-            twin.predict_deterministic(
-                _rapping_perturb(reference_policy, i, m),
-                twin.temp_ref, twin.c_in_ref, twin.q_ref,
-            )[0]
-            for m in multipliers
-        ]
-        axes[1, 1].plot(
-            multipliers, values, label=rf"$T_{i+1}$",
-            color=RAPPING_COLORS[i], lw=1.25, ls=("-", "--", "-.", ":")[i],
-        )
-    axes[1, 1].set_xlabel("相对基准周期")
-    axes[1, 1].set_ylabel(r"预测浓度 $C_{\mathrm{out}}$ / (mg·Nm$^{-3}$)")
-    axes[1, 1].set_title("(d) 振打周期的积灰-再飞扬折中")
-    axes[1, 1].legend(fontsize=7, ncol=2)
+    voltage_changes = np.empty((2, 4))
+    rapping_changes = np.empty((2, 4))
+    for k, multiplier in enumerate(perturbations):
+        for i in range(4):
+            voltage_value = float(
+                twin.predict_deterministic(
+                    _voltage_perturb(reference_policy, i, multiplier),
+                    twin.temp_ref, twin.c_in_ref, twin.q_ref,
+                )[0]
+            )
+            rapping_value = float(
+                twin.predict_deterministic(
+                    _rapping_perturb(reference_policy, i, multiplier),
+                    twin.temp_ref, twin.c_in_ref, twin.q_ref,
+                )[0]
+            )
+            voltage_changes[k, i] = 100.0 * (
+                voltage_value / reference_concentration - 1.0
+            )
+            rapping_changes[k, i] = 100.0 * (
+                rapping_value / reference_concentration - 1.0
+            )
 
-    for ax in axes.flat:
+    weight_labels_u = [
+        f"$U_{{{i+1}}}$\n$w={twin.stage_weights[i]:.3f}$" for i in range(4)
+    ]
+    weight_labels_t = [
+        f"$T_{{{i+1}}}$\n$w={twin.stage_weights[i]:.3f}$" for i in range(4)
+    ]
+    for ax, changes, labels, title, colors in (
+        (axes[1, 0], voltage_changes, weight_labels_u,
+         "(c) 分场电压的局部效应", VOLTAGE_COLORS),
+        (axes[1, 1], rapping_changes, weight_labels_t,
+         "(d) 分场振打周期的局部效应", RAPPING_COLORS),
+    ):
+        ax.bar(
+            x - bar_width / 2, changes[0], width=bar_width,
+            color=colors, alpha=0.62, edgecolor="white", linewidth=0.4,
+            label="降至参考值的 80%",
+        )
+        ax.bar(
+            x + bar_width / 2, changes[1], width=bar_width,
+            color=colors, alpha=1.0, edgecolor="white", linewidth=0.4,
+            hatch="//", label="升至参考值的 120%",
+        )
+        ax.axhline(0.0, color=NEUTRAL_GRAY, lw=0.7, ls="--")
+        ax.set_xticks(x, labels)
+        ax.set_ylabel(r"相对参考浓度变化 / \%")
+        ax.set_title(title)
+        ax.legend(fontsize=6.8, frameon=False, loc="best")
+
+    for ax in axes[0, :]:
         ax.axhline(50, color="#666666", lw=0.7, ls="--", alpha=0.75)
-    for ax in axes[1, :]:
-        ax.axvline(1.0, color="#666666", lw=0.7, ls="--", alpha=0.75)
     fig.subplots_adjust(
         left=0.09, right=0.98, bottom=0.09, top=0.95,
         hspace=0.42, wspace=0.28,
